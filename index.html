@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Exit-Adventskalender – Spiele-Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Marcellus&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="snow-layer" aria-hidden="true"></div>
+
+  <header class="page-header">
+    <div class="title-block">
+      <p class="overline">Unser interaktiver</p>
+      <h1>Exit-Adventskalender</h1>
+      <h2>für <span id="nameTarget">dich</span></h2>
+      <p class="intro">
+        Hinter jeder Tür steckt ein kleines Weihnachtsspiel. Schaffst du es,
+        wartet dahinter deine Tagesbotschaft, ein geheimer Buchstabe und dein echtes Geschenk.
+      </p>
+      <p class="info">
+        Türen lassen sich (außer im Testmodus) nur am passenden Dezembertag öffnen.
+        Wenn der Tag da ist, steht die Tür schon einen Spalt offen und leuchtet – bereit für das Spiel. ♥
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <section class="calendar-section">
+      <div class="calendar-header">
+        <h3>Dein Advent</h3>
+        <p id="missionText" class="mission-text"></p>
+      </div>
+
+      <div class="calendar-grid" id="calendarGrid" aria-label="Interaktiver Adventskalender">
+        <!-- Türen werden per JavaScript eingefügt -->
+      </div>
+
+      <p class="hint">
+        Wenn du ein Spiel geschafft hast, bleibt die Tür weit geöffnet und deine Botschaft wird dauerhaft freigeschaltet.
+      </p>
+    </section>
+  </main>
+
+  <!-- Overlay für Spiele + Tagesnachricht -->
+  <div id="gameOverlay" class="game-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gameTitle">
+    <div class="game-backdrop"></div>
+    <div class="game-window">
+      <button class="game-close" type="button" aria-label="Schließen">&times;</button>
+
+      <div class="game-header">
+        <div class="game-day-label">
+          Tag <span id="gameDay"></span>
+        </div>
+        <div class="game-title-block">
+          <h2 id="gameTitle"></h2>
+          <p id="gameGift" class="game-gift"></p>
+        </div>
+      </div>
+
+      <div class="game-layout">
+        <section class="game-area">
+          <h3>Spiel</h3>
+          <div id="gameContainer" class="game-container">
+            <!-- Spiel wird dynamisch geladen -->
+          </div>
+        </section>
+
+        <section class="game-message" id="gameMessageSection">
+          <h3>Nachricht des Tages</h3>
+          <div id="gameMessageLocked" class="game-message-locked">
+            Dieses Geheimfach öffnet sich, wenn du das Spiel geschafft hast. ✨
+          </div>
+          <div id="gameMessageBody" class="game-message-body hidden">
+            <div id="gameStory" class="game-story"></div>
+            <div id="gameMemory" class="game-memory"></div>
+            <p class="game-letter">
+              Geheimer Buchstabe:&nbsp;<span id="gameLetter"></span>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <template id="lockedMessageTemplate">
+    <div class="locked-message">
+      Dieses Türchen öffnet sich erst am passenden Dezembertag. ✨
+    </div>
+  </template>
+
+  <footer class="page-footer">
+    <p>
+      Für uns gemacht – mit Spielen, Erinnerungen und ganz viel ♥.
+    </p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="games/game1_warmflaschen.js"></script>
+  <script src="games/game2_lip_tracing_runner.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
