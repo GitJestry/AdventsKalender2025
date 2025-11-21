@@ -10,6 +10,7 @@ let isDoorFlyAnimating = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   initSnow();
+  initSantaFlight();
   initHeader();
   initCalendar();
   initGameOverlay();
@@ -461,24 +462,77 @@ function initSnow() {
   const container = document.querySelector(".snow-layer");
   if (!container) return;
 
-  const flakes = 70;
+  const flakes = 90;
   for (let i = 0; i < flakes; i++) {
     const span = document.createElement("span");
     span.className = "snowflake";
     span.textContent = "✶";
 
-    const delay = Math.random() * 10;
-    const duration = 8 + Math.random() * 10;
-    const size = 0.6 + Math.random() * 0.9;
+    const delay = Math.random() * 12;
+    const duration = 9 + Math.random() * 10;
+    const size = 0.55 + Math.random() * 1.1;
+    const sway = 5 + Math.random() * 5;
     const left = Math.random() * 100;
 
     span.style.left = `${left}vw`;
     span.style.fontSize = `${size}rem`;
-    span.style.animationDelay = `${delay}s`;
-    span.style.animationDuration = `${duration}s`;
+    span.style.setProperty("--delay", `${delay}s");
+    span.style.setProperty("--fall-duration", `${duration}s`);
+    span.style.setProperty("--sway-duration", `${4 + Math.random() * 4}s`);
+    span.style.setProperty("--drift", `${sway}px`);
 
     container.appendChild(span);
   }
+}
+
+function initSantaFlight() {
+  const layer = document.querySelector(".santa-layer");
+  if (!layer) return;
+
+  const spawnSleigh = () => {
+    const sleigh = document.createElement("div");
+    const directionLeft = Math.random() > 0.5;
+    const altitude = 15 + Math.random() * 35;
+    const duration = 12 + Math.random() * 8;
+    const scale = 0.9 + Math.random() * 0.3;
+
+    sleigh.className = "santa-sleigh";
+    sleigh.style.top = `${altitude}vh`;
+    sleigh.style.animationDuration = `${duration}s`;
+    sleigh.style.animationName = directionLeft
+      ? "santa-flight-left"
+      : "santa-flight-right";
+    sleigh.style.transform = `scale(${scale})`;
+    sleigh.setAttribute("aria-hidden", "true");
+
+    const trail = document.createElement("div");
+    trail.className = "trail";
+    const sparkles = document.createElement("div");
+    sparkles.className = "sparkles";
+
+    const icon = document.createElement("span");
+    icon.textContent = directionLeft ? "🛷🎅✨🦌🦌" : "🦌🦌✨🎅🛷";
+
+    sleigh.appendChild(trail);
+    sleigh.appendChild(sparkles);
+    sleigh.appendChild(icon);
+    layer.appendChild(sleigh);
+
+    const cleanup = () => sleigh.remove();
+    sleigh.addEventListener("animationend", cleanup);
+    sleigh.addEventListener("animationcancel", cleanup);
+  };
+
+  const scheduleNext = () => {
+    const nextInMs = 12000 + Math.random() * 8000;
+    setTimeout(() => {
+      spawnSleigh();
+      scheduleNext();
+    }, nextInMs);
+  };
+
+  spawnSleigh();
+  scheduleNext();
 }
 
 /* KURZE NACHRICHT BEI GESPERRTEN TÜRCHEN */
