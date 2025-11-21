@@ -53,7 +53,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   const status = document.createElement("div");
   status.className = "warm-game-status";
   status.textContent =
-    "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Schaffst du alle Farben?";
+    "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Schaffst du alle Farben, ist das Wärmflaschen-Geschenk freigeschaltet!";
 
   root.appendChild(header);
   root.appendChild(grid);
@@ -206,7 +206,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
         if (won && !hasWon) {
           hasWon = true;
           status.textContent =
-            "Geschafft! Alle Glitzerfarben sind sortiert. Du darfst dir dein Geschenk holen und deine Nachricht lesen. ✨";
+            "Geschafft! Alle Glitzerfarben sind sortiert – die Wärmflaschen-Challenge ist bestanden. ✨";
           status.classList.add("win");
           try {
             onWin();
@@ -215,7 +215,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
           }
         } else if (!won) {
           status.textContent =
-            "Gut gemacht! Mach weiter, bis jede Wärmflasche nur eine Farbe hat.";
+            "Gut gemacht! Mach weiter, bis jede Wärmflasche nur eine Farbe hat – dann ist das Geschenk wirklich verdient.";
         }
       }
       selectedIndex = null;

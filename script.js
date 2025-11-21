@@ -1,9 +1,12 @@
 // Hauptlogik für den Exit-Adventskalender – Spiele & Türen
 
 const STORAGE_KEY_COMPLETED = "exitAdvent_completedDays_v8";
+const STORAGE_KEY_OPENED = "exitAdvent_openedDays_v1";
 
 let currentGameInstance = null;
 let currentGameDay = null;
+
+let isDoorFlyAnimating = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   initSnow();
@@ -23,13 +26,50 @@ function initHeader() {
   if (missionText && ADVENT_CONFIG.missionIntro) {
     missionText.textContent = ADVENT_CONFIG.missionIntro;
   }
+
+  // Debug-Leiste nur im Testmodus anzeigen
+  if (ADVENT_CONFIG.debugMode) {
+    const header = document.querySelector(".page-header");
+    if (header && !header.querySelector(".debug-bar")) {
+      const dbg = document.createElement("div");
+      dbg.className = "debug-bar";
+      dbg.innerHTML = `
+        <span class="debug-pill">Testmodus aktiv</span>
+        <button type="button" class="debug-reset-button">
+          Fortschritt zurücksetzen
+        </button>
+      `;
+      header.appendChild(dbg);
+
+      const resetBtn = dbg.querySelector(".debug-reset-button");
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          const ok = window.confirm(
+            "Möchtest du wirklich alle gelösten Türen und den Spiel-Fortschritt löschen?"
+          );
+          if (!ok) return;
+
+          try {
+            localStorage.removeItem(STORAGE_KEY_COMPLETED);
+            localStorage.removeItem(STORAGE_KEY_OPENED);
+          } catch (e) {
+            console.warn("Konnte lokalen Fortschritt nicht löschen:", e);
+          }
+          window.location.reload();
+        });
+      }
+    }
+  }
 }
 
 function initCalendar() {
   const grid = document.getElementById("calendarGrid");
   if (!grid || !ADVENT_CONFIG || !Array.isArray(ADVENT_CONFIG.days)) return;
 
+  grid.innerHTML = "";
+
   const completedDays = getCompletedDays();
+  const openedDays = typeof getOpenedDays === "function" ? getOpenedDays() : [];
 
   ADVENT_CONFIG.days
     .slice()
@@ -42,10 +82,13 @@ function initCalendar() {
 
       const isAvailable = isDayAvailable(entry.day);
       const isCompleted = completedDays.includes(entry.day);
+      const isOpened = isCompleted || openedDays.includes(entry.day);
 
       if (!isAvailable) {
         door.classList.add("locked");
       } else if (isCompleted) {
+        door.classList.add("open", "completed");
+      } else if (isOpened) {
         door.classList.add("open");
       } else {
         door.classList.add("available");
@@ -58,8 +101,10 @@ function initCalendar() {
             <div class="door-star-dust"></div>
             <div class="door-panel">
               <span class="door-number">${entry.day}</span>
-              <span class="door-label">Dezember</span>
               <span class="door-knob"></span>
+            </div>
+            <div class="door-status">
+              <div class="door-status-icon" aria-hidden="true">✓</div>
             </div>
           </div>
         </div>
@@ -80,7 +125,103 @@ function handleDoorClick(dayNumber) {
     return;
   }
 
-  openGameForEntry(entry);
+  const door = document.querySelector(`.door[data-day="${dayInt}"]`);
+
+  // Zustand: geöffnet speichern
+  if (door) {
+    const openedDays = getOpenedDays();
+    if (!openedDays.includes(dayInt)) {
+      openedDays.push(dayInt);
+      saveOpenedDays(openedDays);
+    }
+
+    if (!door.classList.contains("completed")) {
+      door.classList.remove("locked", "available");
+      door.classList.add("open");
+    }
+  }
+
+  // Kamera-"hineinfliegen"-Animation, danach Spiel öffnen
+  if (door && typeof animateDoorFlyIn === "function") {
+    animateDoorFlyIn(door, () => {
+      openGameForEntry(entry);
+    });
+  } else {
+    openGameForEntry(entry);
+  }
+}
+
+function animateDoorFlyIn(door, onComplete) {
+  if (isDoorFlyAnimating) {
+    if (typeof onComplete === "function") onComplete();
+    return;
+  }
+  isDoorFlyAnimating = true;
+
+  const rect = door.getBoundingClientRect();
+  const flyLayer = document.createElement("div");
+  flyLayer.className = "door-fly-layer";
+
+  const clone = door.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.classList.remove("door-opening");
+  flyLayer.appendChild(clone);
+
+  document.body.appendChild(flyLayer);
+
+  flyLayer.style.position = "fixed";
+  flyLayer.style.left = rect.left + "px";
+  flyLayer.style.top = rect.top + "px";
+  flyLayer.style.width = rect.width + "px";
+  flyLayer.style.height = rect.height + "px";
+  flyLayer.style.zIndex = "40";
+  flyLayer.style.pointerEvents = "none";
+  flyLayer.style.transformOrigin = "center center";
+  flyLayer.style.transition = "transform 0.8s cubic-bezier(0.22, 0.9, 0.25, 1), opacity 0.8s ease-out";
+  flyLayer.style.transform = "translate3d(0, 0, 0) scale(1)";
+  flyLayer.style.opacity = "1";
+
+  clone.style.width = "100%";
+  clone.style.height = "100%";
+
+  // Original-Tür kurz ausblenden, damit es nicht doppelt wirkt
+  door.classList.add("door-hidden-for-flight");
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  const viewportCenterX = viewportWidth / 2;
+  const viewportCenterY = viewportHeight / 2;
+  const doorCenterX = rect.left + rect.width / 2;
+  const doorCenterY = rect.top + rect.height / 2;
+
+  const translateX = viewportCenterX - doorCenterX;
+  const translateY = viewportCenterY - doorCenterY;
+
+  // Skaliere so, dass die Tür ungefähr die Größe des Spielfensters bekommt
+  const targetWidth = Math.min(1100, viewportWidth * 0.82);
+  const targetHeight = viewportHeight * 0.82;
+  const scaleX = targetWidth / rect.width;
+  const scaleY = targetHeight / rect.height;
+  const scale = Math.min(scaleX, scaleY);
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      flyLayer.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+      flyLayer.style.opacity = "0.95";
+    });
+  });
+
+  window.setTimeout(() => {
+    if (flyLayer.parentNode) {
+      flyLayer.parentNode.removeChild(flyLayer);
+    }
+    door.classList.remove("door-hidden-for-flight");
+    isDoorFlyAnimating = false;
+    if (typeof onComplete === "function") {
+      onComplete();
+    }
+  }, 800);
 }
 
 /* GAME OVERLAY */
@@ -143,19 +284,18 @@ function openGameForEntry(entry) {
   if (gameDay) gameDay.textContent = String(entry.day);
   if (gameTitle) gameTitle.textContent = entry.title ?? "";
   if (gameGift) gameGift.textContent = entry.giftLabel ?? "";
+  if (gameStory) gameStory.textContent = entry.story ?? "";
 
-  if (gameStory) {
-    gameStory.innerHTML = (entry.story ?? "").trim().replace(/\n\s*/g, " ");
-  }
   if (gameMemory) {
-    if (entry.memory && entry.memory.trim().length > 0) {
-      gameMemory.innerHTML = entry.memory.trim();
+    if (entry.memory) {
+      gameMemory.innerHTML = entry.memory;
       gameMemory.style.display = "block";
     } else {
       gameMemory.innerHTML = "";
       gameMemory.style.display = "none";
     }
   }
+
   if (gameLetter) {
     gameLetter.textContent = entry.magicLetter ?? "";
   }
@@ -163,12 +303,13 @@ function openGameForEntry(entry) {
   const completedDays = getCompletedDays();
   const isCompleted = completedDays.includes(entry.day);
 
-  if (isCompleted) {
-    if (msgLocked) msgLocked.style.display = "none";
-    if (msgBody) msgBody.classList.remove("hidden");
-  } else {
-    if (msgLocked) msgLocked.style.display = "block";
-    if (msgBody) msgBody.classList.add("hidden");
+  if (msgLocked) msgLocked.style.display = isCompleted ? "none" : "block";
+  if (msgBody) {
+    if (isCompleted) {
+      msgBody.classList.remove("hidden");
+    } else {
+      msgBody.classList.add("hidden");
+    }
   }
 
   destroyCurrentGame();
@@ -181,11 +322,17 @@ function openGameForEntry(entry) {
         onWin: () => handleGameWin(entry.day)
       });
     } else {
-      container.innerHTML = "<p style='font-size:0.9rem;color:#a6b0d8;'>Für dieses Türchen ist das Spiel noch nicht eingebaut – du kannst es später ergänzen. 🎄</p>";
+      container.innerHTML =
+        "<p style='font-size:0.9rem;color:#a6b0d8;'>Für dieses Türchen ist das Spiel noch nicht eingebaut – du kannst es später ergänzen. 🎄</p>";
     }
   }
 
   overlay.classList.remove("hidden");
+  // Animationsklasse für das „hineingehen“ durch die Tür
+  overlay.classList.remove("door-enter-animation");
+  // Reflow erzwingen, damit die Animation jedes Mal neu startet
+  void overlay.offsetWidth;
+  overlay.classList.add("door-enter-animation");
 }
 
 function handleGameWin(day) {
@@ -197,14 +344,38 @@ function handleGameWin(day) {
 
   const door = document.querySelector(`.door[data-day="${day}"]`);
   if (door) {
-    door.classList.remove("available", "locked");
-    door.classList.add("open");
+    door.classList.remove("locked", "available");
+    door.classList.add("open", "completed");
   }
 
   const msgLocked = document.getElementById("gameMessageLocked");
   const msgBody = document.getElementById("gameMessageBody");
   if (msgLocked) msgLocked.style.display = "none";
   if (msgBody) msgBody.classList.remove("hidden");
+
+  // Gewinner-Text für Celines Advent-Challenge
+  const message = `Du hast Gewonnen! Nun darfst du dein ${day}-tes Adventgeschenk öffnen.`;
+
+  const winOverlay = document.getElementById("gameWinOverlay");
+  const winOverlayInner = winOverlay ? winOverlay.querySelector(".game-win-overlay-inner") : null;
+  const winPersistent = document.getElementById("gameWinPersistent");
+
+  if (winOverlay && winOverlayInner) {
+    winOverlayInner.innerHTML = `<p>${message}</p><small>(Klick hier, um weiterzuspielen)</small>`;
+    winOverlay.classList.remove("hidden");
+    winOverlay.onclick = () => {
+      winOverlay.classList.add("hidden");
+      winOverlay.onclick = null;
+      if (winPersistent) {
+        winPersistent.textContent = message;
+        winPersistent.classList.remove("hidden");
+      }
+    };
+  } else if (winPersistent) {
+    // Falls das Overlay aus irgendeinem Grund nicht existiert, zeigen wir zumindest den Balken an
+    winPersistent.textContent = message;
+    winPersistent.classList.remove("hidden");
+  }
 }
 
 /* DATUMSLOGIK */
@@ -251,6 +422,36 @@ function saveCompletedDays(days) {
     localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(uniqueSorted));
   } catch {
     // Wenn localStorage nicht geht, ist nur das Merken der offenen Türen betroffen.
+  }
+}
+
+
+
+// GESPEICHERTE GEÖFFNETE TÜREN (auch wenn das Spiel noch nicht geschafft ist)
+function getOpenedDays() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_OPENED);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((n) => Number(n))
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 24);
+  } catch {
+    return [];
+  }
+}
+
+function saveOpenedDays(days) {
+  const uniqueSorted = Array.from(new Set(days))
+    .map((n) => Number(n))
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 24)
+    .sort((a, b) => a - b);
+
+  try {
+    localStorage.setItem(STORAGE_KEY_OPENED, JSON.stringify(uniqueSorted));
+  } catch {
+    // Falls localStorage nicht verfügbar ist, ist nur die Merk-Funktion betroffen.
   }
 }
 

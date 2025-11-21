@@ -18,8 +18,8 @@
       <h1>Exit-Adventskalender</h1>
       <h2>für <span id="nameTarget">dich</span></h2>
       <p class="intro">
-        Hinter jeder Tür steckt ein kleines Weihnachtsspiel. Schaffst du es,
-        wartet dahinter deine Tagesbotschaft, ein geheimer Buchstabe und dein echtes Geschenk.
+        Hinter jeder Tür steckt ein kleines Weihnachtsspiel. Bevor du deine echte Adventstür öffnen darfst,
+        musst du hier die Challenge des Tages gewinnen – nur dann ist das Geschenk freigeschaltet. ✨
       </p>
       <p class="info">
         Türen lassen sich (außer im Testmodus) nur am passenden Dezembertag öffnen.
@@ -40,7 +40,7 @@
       </div>
 
       <p class="hint">
-        Wenn du ein Spiel geschafft hast, bleibt die Tür weit geöffnet und deine Botschaft wird dauerhaft freigeschaltet.
+        Jeden Tag: erst das Spiel gewinnen, <strong>dann</strong> darfst du das passende echte Adventgeschenk öffnen.
       </p>
     </section>
   </main>
@@ -64,22 +64,26 @@
       <div class="game-layout">
         <section class="game-area">
           <h3>Spiel</h3>
-          <div id="gameContainer" class="game-container">
-            <!-- Spiel wird dynamisch geladen -->
+          <div class="game-area-inner">
+            <div id="gameContainer" class="game-container">
+              <!-- Spiel wird dynamisch geladen -->
+            </div>
+            <div id="gameWinOverlay" class="game-win-overlay hidden" role="status" aria-live="polite">
+              <div class="game-win-overlay-inner"></div>
+            </div>
           </div>
         </section>
 
         <section class="game-message" id="gameMessageSection">
-          <h3>Nachricht des Tages</h3>
+          <div class="game-message-header">
+            <h3>Hinweis zu deinem Geschenk</h3>
+            <div id="gameWinPersistent" class="game-win-persistent hidden" aria-live="polite"></div>
+          </div>
           <div id="gameMessageLocked" class="game-message-locked">
-            Dieses Geheimfach öffnet sich, wenn du das Spiel geschafft hast. ✨
+Sobald du das Spiel gewonnen hast, erscheint hier ein kleiner Hinweis zu deinem Adventgeschenk.
           </div>
           <div id="gameMessageBody" class="game-message-body hidden">
             <div id="gameStory" class="game-story"></div>
-            <div id="gameMemory" class="game-memory"></div>
-            <p class="game-letter">
-              Geheimer Buchstabe:&nbsp;<span id="gameLetter"></span>
-            </p>
           </div>
         </section>
       </div>
@@ -94,7 +98,7 @@
 
   <footer class="page-footer">
     <p>
-      Für uns gemacht – mit Spielen, Erinnerungen und ganz viel ♥.
+      Für Celine gemacht – als kleine tägliche Challenge vor jedem echten Adventgeschenk. ♥
     </p>
   </footer>
 
