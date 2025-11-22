@@ -75,6 +75,72 @@ function createDoorStarfield(starLayer) {
   starLayer.appendChild(fragment);
 }
 
+function copyComputedProperties(source, target, properties) {
+  if (!source || !target || !properties || !properties.length) return;
+
+  const computed = window.getComputedStyle(source);
+
+  properties.forEach((prop) => {
+    const value = computed.getPropertyValue(prop);
+    if (value) {
+      target.style.setProperty(prop, value);
+    }
+  });
+}
+
+function syncDoorVisualState(sourceDoor, targetDoor) {
+  if (!sourceDoor || !targetDoor) return;
+
+  const sourceGlow = sourceDoor.querySelector(".door-glow");
+  const targetGlow = targetDoor.querySelector(".door-glow");
+
+  copyComputedProperties(sourceGlow, targetGlow, [
+    "background",
+    "opacity",
+    "filter",
+    "box-shadow",
+    "mix-blend-mode",
+  ]);
+
+  const sourceStarLayer = sourceDoor.querySelector(".door-star-dust");
+  const targetStarLayer = targetDoor.querySelector(".door-star-dust");
+
+  if (sourceStarLayer && targetStarLayer) {
+    copyComputedProperties(sourceStarLayer, targetStarLayer, [
+      "background",
+      "opacity",
+      "filter",
+      "box-shadow",
+      "transform",
+    ]);
+
+    const sourceStars = sourceStarLayer.querySelectorAll(".door-star");
+    const targetStars = targetStarLayer.querySelectorAll(".door-star");
+
+    sourceStars.forEach((star, index) => {
+      const targetStar = targetStars[index];
+      if (!targetStar) return;
+
+      copyComputedProperties(star, targetStar, [
+        "--star-x",
+        "--star-y",
+        "--star-size",
+        "--star-scale",
+        "--star-tilt",
+        "--star-color",
+        "opacity",
+        "transform",
+        "animation-duration",
+        "animation-delay",
+      ]);
+
+      targetStar.style.animationPlayState = "paused";
+    });
+
+    targetStarLayer.style.animationPlayState = "paused";
+  }
+}
+
 /**
  * Liefert die Spiel-Definition aus ADVENT_CONFIG.games für eine gegebene gameId.
  */
@@ -313,6 +379,7 @@ function animateDoorFlyIn(door, onComplete) {
   const clone = door.cloneNode(true);
   clone.removeAttribute("id");
   clone.classList.remove("door-opening");
+  syncDoorVisualState(door, clone);
   flyLayer.appendChild(clone);
 
   document.body.appendChild(flyLayer);
