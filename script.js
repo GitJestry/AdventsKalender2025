@@ -18,8 +18,8 @@ function randomizeDoorStarPosition(star, palette) {
   star.style.setProperty("--star-y", `${Math.random() * 100}%`);
 
   // Größe / Scale
-  const size = (Math.random() * 1.4 + 1).toFixed(2);
-  const scale = (Math.random() * 1.6 + 1).toFixed(2);
+  const size = (Math.random() * 1.2 + 0.6).toFixed(2);
+  const scale = (Math.random() * 1.4 + 0.86).toFixed(2);
   const tilt = Math.floor(Math.random() * 360);
 
   star.style.setProperty("--star-size", `${size}px`);
@@ -33,7 +33,7 @@ function randomizeDoorStarPosition(star, palette) {
   );
 
   // Burst-Effekt nur manchmal
-  if (Math.random() > 0.82) {
+  if (Math.random() > 0.4) {
     star.classList.add("door-star--burst");
   } else {
     star.classList.remove("door-star--burst");
@@ -44,7 +44,7 @@ function createDoorStarfield(starLayer) {
   if (!starLayer) return;
 
   const palette = ["#ffd166", "#ffe9a3", "#fff4d6", "#f7c948", "#ffdf85"];
-  const totalStars = 15; // nur 10 Sterne pro Tür
+  const totalStars = 20; // nur 15 Sterne pro Tür
 
   starLayer.innerHTML = "";
 

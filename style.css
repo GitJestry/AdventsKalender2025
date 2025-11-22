@@ -497,20 +497,28 @@ main {
   pointer-events: none;
   border-radius: 999px;
 
-  /* Leuchtpunkt */
-  background: radial-gradient(
-    circle at 50% 45%,
-    var(--star-color) 0 38%,
-    rgba(255, 230, 170, 0.85) 45%,
-    rgba(255, 220, 140, 0.15) 70%,
-    transparent 100%
-  );
+  /* Leuchtpunkt – etwas schwächer */
+  background: radial-gradient(circle at 50% 45%,
+      var(--star-color) 0 38%,
+      rgba(255, 230, 170, 0.60) 45%,
+      /* vorher 0.85 */
+      rgba(255, 220, 140, 0.10) 70%,
+      /* vorher 0.15 */
+      transparent 100%);
+
+  /* Glow ~30 % reduziert */
   box-shadow:
-    0 0 10px 3px rgba(255, 220, 140, 0.65),
-    0 0 24px 8px rgba(255, 205, 110, 0.45),
-    0 0 52px 16px rgba(255, 198, 90, 0.28),
-    0 0 96px 24px rgba(255, 190, 70, 0.15);
-  filter: drop-shadow(0 0 6px var(--star-color));
+    0 0 8px 2px rgba(255, 220, 140, 0.45),
+    /* vorher 10px 3px, 0.65 */
+    0 0 18px 6px rgba(255, 205, 110, 0.32),
+    /* vorher 24px 8px, 0.45 */
+    0 0 36px 12px rgba(255, 198, 90, 0.20),
+    /* vorher 52px 16px, 0.28 */
+    0 0 72px 20px rgba(255, 190, 70, 0.10);
+  /* vorher 96px 24px, 0.15 */
+
+  filter: drop-shadow(0 0 4px var(--star-color));
+  /* leicht schwächer */
 
   /* wir zentrieren den Stern um (top/left) herum */
   transform-origin: center center;
@@ -520,6 +528,7 @@ main {
   animation: starTwinkle var(--star-twinkle) ease-in-out infinite;
   animation-delay: var(--star-delay);
 }
+
 
 
 
