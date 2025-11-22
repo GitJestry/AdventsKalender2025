@@ -12,6 +12,48 @@ const loadedGameScripts = new Set();
 const loadingGameScripts = {};
 const loadedGameStyles = new Set();
 
+function createDoorStarfield(starLayer) {
+  if (!starLayer) return;
+
+  const palette = ["#ffd166", "#ffe9a3", "#fff4d6", "#f7c948", "#ffdf85"];
+  const totalStars = 220;
+
+  starLayer.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < totalStars; i += 1) {
+    const star = document.createElement("span");
+    star.className = "door-star";
+
+    if (Math.random() > 0.82) {
+      star.classList.add("door-star--burst");
+    }
+
+    const size = (Math.random() * 1.2 + 0.4).toFixed(2);
+    const scale = (Math.random() * 1.4 + 0.8).toFixed(2);
+    const twinkle = (1.6 + Math.random() * 2.6).toFixed(2);
+    const delay = (Math.random() * 6).toFixed(2);
+    const tilt = Math.floor(Math.random() * 360);
+
+    star.style.setProperty("--star-size", `${size}px`);
+    star.style.setProperty("--star-scale", scale);
+    star.style.setProperty("--star-x", `${Math.random() * 100}%`);
+    star.style.setProperty("--star-y", `${Math.random() * 100}%`);
+    star.style.setProperty("--star-twinkle", `${twinkle}s`);
+    star.style.setProperty("--star-delay", `${delay}s`);
+    star.style.setProperty("--star-tilt", `${tilt}deg`);
+    star.style.setProperty(
+      "--star-color",
+      palette[Math.floor(Math.random() * palette.length)]
+    );
+
+    fragment.appendChild(star);
+  }
+
+  starLayer.appendChild(fragment);
+}
+
 /**
  * Liefert die Spiel-Definition aus ADVENT_CONFIG.games für eine gegebene gameId.
  */
@@ -191,6 +233,9 @@ function initCalendar() {
           </div>
         </div>
       `;
+
+      const starLayer = door.querySelector(".door-star-dust");
+      createDoorStarfield(starLayer);
 
       door.addEventListener("click", () => handleDoorClick(entry.day));
       grid.appendChild(door);
