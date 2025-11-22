@@ -10,7 +10,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
-  const REQUIRED_ACCURACY = 0.99;  // mindestens 96%
+  const REQUIRED_ACCURACY = 0.98;  // mindestens 96%
   const TRACK_LENGTH = 3000;
   const TRACK_DURATION = 22;
   const START_WORLD_X = 80;
