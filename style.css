@@ -85,6 +85,47 @@ body {
   z-index: 1;
 }
 
+.debug-bar {
+  margin-top: 0.8rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(8, 24, 46, 0.85);
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  color: var(--accent-soft);
+}
+
+.debug-pill {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 179, 71, 0.16);
+  border: 1px solid rgba(255, 179, 71, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.debug-reset-button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-soft);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.debug-reset-button:hover,
+.debug-reset-button:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+
 .title-block {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
   border-radius: 2rem;
@@ -203,16 +244,27 @@ main {
   perspective: 900px;
 }
 
+.door-hidden-for-flight {
+  visibility: hidden;
+}
+
+.door-fly-layer {
+  will-change: transform, opacity;
+}
+
+
 .door-inner {
   position: relative;
   border-radius: var(--radius-lg);
   height: 0;
   padding-bottom: 120%;
-  background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 52%),
-              radial-gradient(circle at 80% 120%, rgba(255, 255, 255, 0.07), transparent 55%),
-              linear-gradient(145deg, rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.03));
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+  min-height: 88px;
+  /* dunklerer, holziger Rahmen */
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 45%),
+    linear-gradient(160deg, #8a5a2e 0%, #5a341a 45%, #2c1608 100%);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   display: flex;
   align-items: stretch;
@@ -221,11 +273,14 @@ main {
   transform-style: preserve-3d;
 }
 
+
 .door-frame {
   position: relative;
   border-radius: calc(var(--radius-lg) - 0.25rem);
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.14), transparent 55%),
-              rgba(0, 0, 0, 0.75);
+  background:
+    radial-gradient(circle at top, rgba(120, 180, 255, 0.18), transparent 55%),
+    radial-gradient(circle at 18% 120%, rgba(255, 190, 120, 0.14), transparent 55%),
+    rgba(0, 0, 8, 0.9);
   flex: 1;
   display: flex;
   align-items: stretch;
@@ -237,9 +292,22 @@ main {
   position: relative;
   flex: 1;
   border-radius: calc(var(--radius-lg) - 0.35rem);
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.55));
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  /* dunkler, leicht gemaserter Holz-Look */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.20) 0,
+      rgba(0, 0, 0, 0.20) 2px,
+      transparent 2px,
+      transparent 5px
+    ),
+    linear-gradient(150deg, #c4925a 0%, #8a5429 45%, #3e1f10 100%);
+  background-blend-mode: soft-light, overlay, normal;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(0, 0, 0, 0.7);
   transform-origin: left center;
   transform-style: preserve-3d;
   transition:
@@ -254,44 +322,122 @@ main {
   gap: 0.25rem;
 }
 
+
 .door-glow {
   position: absolute;
-  inset: 12% 8%;
-  border-radius: calc(var(--radius-lg) - 0.5rem);
+  inset: 0;
+  border-radius: calc(var(--radius-lg) - 0.25rem);
+  /* dunkler, bunter Schimmer über die ganze Tür – Eisblau + Gold + ein wenig Magenta */
   background:
-    radial-gradient(circle at top, rgba(255, 255, 200, 0.85), transparent 55%),
-    radial-gradient(circle at bottom, rgba(255, 180, 100, 0.9), transparent 65%);
+    conic-gradient(
+      from 0deg,
+      rgba(255, 222, 140, 0.38),
+      rgba(123, 200, 255, 0.42),
+      rgba(255, 160, 215, 0.35),
+      rgba(120, 255, 210, 0.35),
+      rgba(255, 222, 140, 0.38)
+    ),
+    radial-gradient(circle at 12% 0%, rgba(255, 240, 210, 0.22), transparent 60%),
+    radial-gradient(circle at 88% 10%, rgba(145, 190, 255, 0.3), transparent 62%),
+    radial-gradient(circle at 50% 115%, rgba(255, 160, 130, 0.32), transparent 70%),
+    radial-gradient(circle at 50% 50%, #020314 0%, #000000 72%);
   opacity: 0;
-  transition: opacity var(--transition-med);
-  filter: blur(1px);
+  mix-blend-mode: screen;
+  filter: blur(14px);
+  box-shadow:
+    0 0 30px rgba(120, 190, 255, 0.45),
+    0 0 60px rgba(255, 215, 160, 0.4),
+    0 0 90px rgba(160, 120, 255, 0.32);
+  transition:
+    opacity var(--transition-med),
+    box-shadow var(--transition-med),
+    filter var(--transition-med),
+    transform 700ms ease-out;
 }
 
 .door-star-dust {
   position: absolute;
   inset: 0;
+  border-radius: calc(var(--radius-lg) - 0.35rem);
+  /* dichter Sternen-/Funken-Himmel: bunt, aber auf sehr dunklem Grund – Eisblau + Gold + Magenta */
   background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.6) 0, transparent 55%),
-    radial-gradient(circle, rgba(255, 223, 173, 0.6) 0, transparent 55%);
-  background-size: 4px 4px, 3px 3px;
-  background-position: 0 0, 2px 2px;
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0, rgba(255, 255, 255, 0) 55%),
+    radial-gradient(circle, rgba(185, 215, 255, 0.9) 0, rgba(185, 215, 255, 0) 55%),
+    radial-gradient(circle, rgba(255, 215, 155, 0.9) 0, rgba(255, 215, 155, 0) 55%),
+    radial-gradient(circle, rgba(210, 180, 255, 0.9) 0, rgba(210, 180, 255, 0) 55%),
+    radial-gradient(circle, rgba(255, 180, 220, 0.85) 0, rgba(255, 180, 220, 0) 55%);
+  background-size: 5px 5px, 8px 8px, 13px 13px, 18px 18px, 24px 24px;
+  background-position: 0 0, 14px -8px, -18px 10px, 18px 16px, -12px -6px;
+  background-repeat: repeat;
   mix-blend-mode: screen;
   opacity: 0;
-  transition: opacity var(--transition-med);
   pointer-events: none;
+  filter: brightness(1.2);
+  transition:
+    opacity var(--transition-med),
+    filter 900ms ease-out,
+    transform 900ms ease-out;
 }
 
 @keyframes twinkle {
-  0% { opacity: 0.35; transform: translate3d(0,0,0); }
-  50% { opacity: 0.9; transform: translate3d(1px,-1px,0); }
-  100% { opacity: 0.35; transform: translate3d(0,0,0); }
+  0% {
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0) scale(0.98);
+  }
+  30% {
+    opacity: 1;
+    transform: translate3d(1px, -1px, 0) scale(1.03);
+  }
+  60% {
+    opacity: 0.7;
+    transform: translate3d(-1px, 1px, 0) scale(1.01);
+  }
+  100% {
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0) scale(0.98);
+  }
 }
+
+@keyframes doorGlowPulse {
+  0%,
+  100% {
+    opacity: 0.65;
+    box-shadow:
+      0 0 20px rgba(120, 190, 255, 0.5),
+      0 0 38px rgba(255, 215, 160, 0.35);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 32px rgba(120, 190, 255, 0.9),
+      0 0 60px rgba(255, 215, 160, 0.75),
+      0 0 74px rgba(190, 140, 255, 0.7);
+  }
+}
+
+@keyframes door-open-pulse {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.door-opening .door-inner {
+  animation: door-open-pulse 0.6s ease-out;
+}
+
 
 .door-number {
   font-family: "Marcellus", serif;
-  font-size: 1.7rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .door-label {
@@ -339,8 +485,10 @@ main {
 }
 
 .door.available .door-star-dust {
-  opacity: 0.5;
-  animation: twinkle 3.6s ease-in-out infinite;
+  opacity: 0.85;
+  animation:
+    doorGlitterDrift 16s linear infinite,
+    doorGlitterTwinkle 1.9s ease-in-out infinite alternate;
 }
 
 .door.available:hover .door-panel,
@@ -363,10 +511,65 @@ main {
   opacity: 1;
 }
 
+.door.available .door-glow,
+.door.open .door-glow {
+  animation: doorGlowPulse 2.6s ease-in-out infinite;
+}
+
 .door.open .door-star-dust {
   opacity: 1;
-  animation: twinkle 2.8s ease-in-out infinite;
+  animation:
+    doorGlitterDrift 11s linear infinite,
+    doorGlitterTwinkle 1.5s ease-in-out infinite alternate;
 }
+
+.door.completed .door-glow {
+  opacity: 0;
+  filter: blur(0);
+  box-shadow: none;
+  animation: none;
+}
+
+.door.completed .door-star-dust {
+  opacity: 0;
+  animation: none;
+}
+
+.door-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.75);
+  transition: opacity var(--transition-med), transform var(--transition-med);
+}
+
+.door-status-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.95), transparent 55%),
+    radial-gradient(circle at 70% 130%, rgba(255, 200, 120, 0.9), transparent 60%),
+    linear-gradient(145deg, #0f5b2a, #0b3a1c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.55);
+}
+
+.door.completed .door-status {
+  opacity: 1;
+  transform: scale(1);
+}
+
 
 /* Subtle per-door tint */
 .door:nth-child(6n+1) .door-inner { background-color: rgba(255, 215, 180, 0.06); }
@@ -472,6 +675,22 @@ main {
   }
 }
 
+@keyframes door-enter-zoom {
+  0% {
+    transform: translateY(18px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.game-overlay.door-enter-animation .game-window {
+  animation: door-enter-zoom 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
 .game-close {
   position: absolute;
   top: 0.7rem;
@@ -494,6 +713,7 @@ main {
 .game-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.9rem;
   margin-bottom: 0.8rem;
 }
@@ -546,11 +766,20 @@ main {
   min-height: 360px;
 }
 
-game-message {
+.game-message {
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(0, 0, 0, 0.35);
   padding: 0.75rem 0.9rem 0.85rem;
+}
+
+.game-message-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .game-message-locked {
@@ -925,3 +1154,184 @@ game-message {
     flex: 1 1 auto;
   }
 }
+
+
+.game-title-block {
+  flex: 1;
+  text-align: center;
+}
+
+.game-area-inner {
+  position: relative;
+}
+
+.game-win-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 60%),
+    rgba(0, 0, 0, 0.78);
+  color: var(--text-main);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.game-win-overlay-inner p {
+  margin: 0;
+}
+
+.game-win-overlay-inner small {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+}
+.game-win-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.game-win-persistent {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: flex-start;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(163, 255, 206, 0.98));
+  color: #04130a;
+  font-weight: 700;
+  font-size: 0.8rem;
+  max-width: 100%;
+  white-space: normal;
+  text-align: right;
+  box-shadow: 0 0 12px rgba(163, 255, 206, 0.65);
+}
+
+.game-win-persistent::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  font-size: 0.9em;
+}
+
+.game-win-persistent.hidden {
+  display: none;
+}
+
+
+
+@keyframes doorGlitterDrift {
+  0% {
+    background-position: 0 0, 14px -8px, -18px 10px, 18px 16px;
+  }
+  50% {
+    background-position: 12px -16px, -4px 18px, 22px -6px, -14px 8px;
+  }
+  100% {
+    background-position: -10px 6px, 24px 0, -24px 16px, 10px -12px;
+  }
+}
+
+@keyframes doorGlitterTwinkle {
+  0% {
+    opacity: 0.45;
+    filter: brightness(0.8);
+  }
+  40% {
+    opacity: 0.95;
+    filter: brightness(1.45);
+  }
+  100% {
+    opacity: 0.6;
+    filter: brightness(1.0);
+  }
+}
+
+
+/* Schnelle Hände – Reaktionsspiel */
+
+.reaction-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.reaction-blob-wrap {
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reaction-blob {
+  width: 120px;
+  height: 120px;
+  border-radius: 60% 45% 50% 75%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.9) 0, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(145deg, #ffb8dd, #ffc58f);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transform: scale(0.4) translateY(24px);
+  pointer-events: none;
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+.reaction-blob.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  animation: reactionBlobPop 320ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes reactionBlobPop {
+  0% {
+    transform: scale(0.3) translateY(30px);
+  }
+  55% {
+    transform: scale(1.08) translateY(-6px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.reaction-last-line {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.reaction-time-value {
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.reaction-time-good {
+  color: #4fff88;
+}
+
+.reaction-time-bad {
+  color: #ff6b6b;
+}
+
+.reaction-time-neutral {
+  color: var(--text-muted);
+}
+

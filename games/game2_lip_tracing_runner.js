@@ -10,7 +10,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
-  const REQUIRED_ACCURACY = 0.95;  // mindestens 95%
+  const REQUIRED_ACCURACY = 0.96;  // mindestens 96%
   const TRACK_LENGTH = 3000;
   const TRACK_DURATION = 22;
   const START_WORLD_X = 80;
@@ -77,7 +77,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   const title = document.createElement("div");
   title.className = "trace-title";
-  title.textContent = "Steuere den Lippenbalsam entlang der krickeligen Weihnachtsspur – wie im Mario-Party-Malspiel.";
+  title.textContent = "Lippenbalsam-Challenge: Zeichne die Spur sauber nach, bevor du dein Geschenk öffnen darfst.";
 
   const stats = document.createElement("div");
   stats.className = "trace-stats";
@@ -639,7 +639,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     if (success) {
       if (statusLineEl) {
         statusLineEl.textContent =
-          `Stark! Du hast mit ${accPercent}% Genauigkeit eingecremt. Du darfst dein Geschenk holen und die Nachricht lesen. ✨`;
+          `Stark! Du hast mit ${accPercent}% Genauigkeit eingecremt – die Lippenbalsam-Challenge ist bestanden. ✨`;
         statusLineEl.classList.add("trace-status-success");
         statusLineEl.classList.remove("trace-status-fail");
       }

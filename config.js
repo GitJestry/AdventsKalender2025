@@ -1,35 +1,61 @@
-// Konfiguration für den Exit-Adventskalender – aktuell nur Tag 1 & 2 für die Spiele
+// Konfiguration für den Exit-Adventskalender – Celines Spiele-Challenge
+// Spiele werden zentral in ADVENT_CONFIG.games registriert und dann
+// von den Kalendertüren über gameId referenziert.
 
 const ADVENT_CONFIG = {
-  recipientName: "DEIN SCHATZ",
+  recipientName: "Celine",
   missionIntro:
-    "Der Weihnachtsstern über unserer kleinen Welt ist verschwunden. Hinter jeder Tür wartet ein kleines Spiel. " +
-    "Wenn du gewinnst, öffnet sich dahinter eine Nachricht, ein geheimer Buchstabe und natürlich dein echtes Geschenk am jeweiligen Tag.",
+    "Bevor du deine echte Adventstür öffnen darfst, musst du hie...innen. Jeden Tag gibt es eine kleine Challenge nur für dich. ♥",
   debugMode: true,
   year: null,
+
+  // Zentrale Spiele-Definitionen: hier neue Spiele eintragen.
+  games: {
+    warmflaschen_sort: {
+      id: "warmflaschen_sort",
+      script: "games/game1_warmflaschen.js",
+      style: null
+    },
+    lip_tracing_runner: {
+      id: "lip_tracing_runner",
+      script: "games/game2_lip_tracing_runner.js",
+      style: null
+    },
+    fast_hands_reaction: {
+      id: "fast_hands_reaction",
+      script: "games/game3_fast_hands_reaction.js",
+      style: null
+    }
+  },
+
+  // Türen: verknüpfen einen Kalendertag mit einem Spiel
   days: [
     {
       day: 1,
-      title: "Kapitel 1 – Wärmflaschen voller Sternenlicht",
+      title: "Wärmflaschen Umfüllen Ad",
       giftLabel: "Im echten Kalender: Wärmflasche",
-      story: `In dieser Nacht ist etwas anders: Der Weihnachtsstern über eurer kleinen Welt ist verschwunden.
-      Statt warmem Licht liegt ein leiser, blauer Schimmer über allem. Nur ein Brief bleibt zurück – mit deinem Namen darauf.
-      Darin steht, dass nur jemand mit einem besonders warmen Herzen den Stern zurückholen kann.
-      Die Wärmflasche heute ist dein erstes Ausrüstungsstück: Sie hält nicht nur dich warm, sondern auch die Funken der Hoffnung.`,
-      memory: `Ersetze diesen Text durch eine eurer Erinnerungen. Zum Beispiel: <strong>„Weißt du noch, wie wir zum ersten Mal gemeinsam einen kalten Winterabend überlebt haben – nur mit Decken, Tee und einem Film?“</strong>`,
-      magicLetter: "D",
+      story: "",
+      memory: "",
+      magicLetter: "",
       gameId: "warmflaschen_sort"
     },
     {
       day: 2,
-      title: "Kapitel 2 – Die flüsternde Winterluft",
+      title: "Lippenbalsam-auftragen-test",
       giftLabel: "Im echten Kalender: Lippenpflege",
-      story: `Draußen ist es eisig. Der Winterwind flüstert dir Hinweise zu, doch die kalte Luft lässt deine Lippen fast gefrieren.
-      Du merkst: Um mit dem Winter selbst zu verhandeln, brauchst du geschützte Lippen.
-      Die Lippenpflege heute ist wie ein kleiner Zauberschild gegen die Kälte – damit du jede Botschaft des Windes verstehen kannst.`,
-      memory: `Hier kannst du eine Erinnerung einfügen, bei der ihr draußen wart. Zum Beispiel ein Spaziergang im Schnee oder ein Weihnachtsmarkt-Besuch.`,
-      magicLetter: "U",
+      story: "",
+      memory: "",
+      magicLetter: "",
       gameId: "lip_tracing_runner"
+    },
+    {
+      day: 3,
+      title: "Schnelle Hände – Reaktionsklecks",
+      giftLabel: "Im echten Kalender: noch geheim 😉",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "fast_hands_reaction"
     }
   ]
 };
