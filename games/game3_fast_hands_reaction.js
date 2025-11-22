@@ -8,7 +8,7 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
   const REQUIRED_STREAK = 3;
-  const MAX_REACTION_SECONDS = 0.2; // 200 ms
+  const MAX_REACTION_SECONDS = 0.3; // 200 ms
   const MIN_WAIT_MS = 4000;
   const MAX_WAIT_MS = 7000;
   const TOO_LATE_MS = 1200;

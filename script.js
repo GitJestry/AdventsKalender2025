@@ -37,7 +37,7 @@ function setupBackgroundMusic() {
   try {
     backgroundMusic = new Audio("assets/audio/driving_home_for_christmas.mp3");
     backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.16; // noch leiser (~20% weniger)
+    backgroundMusic.volume = 0.10; // noch leiser (~20% weniger)
     backgroundMusic.autoplay = true;
     backgroundMusic.preload = "auto";
 
