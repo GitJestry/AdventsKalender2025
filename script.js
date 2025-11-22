@@ -31,43 +31,32 @@ let doorPullProgress = getDoorPullProgress();
 
 let backgroundMusic = null;
 let tearEffectSound = null;
+let backgroundMusicPlaybackGuard = null;
 
 function setupBackgroundMusic() {
   try {
     backgroundMusic = new Audio("assets/audio/driving_home_for_christmas.mp3");
     backgroundMusic.loop = true;
     backgroundMusic.volume = 0.16; // noch leiser (~20% weniger)
+    backgroundMusic.autoplay = true;
+    backgroundMusic.preload = "auto";
 
     // Falls das Loop-Flag vom Browser ignoriert wird oder das Playback unterbrochen wurde,
     // starte das Lied erneut sobald es endet.
-    backgroundMusic.addEventListener("ended", () => {
+    const ensureBackgroundMusicPlays = () => {
+      if (!backgroundMusic || !backgroundMusic.paused) return;
       backgroundMusic.currentTime = 0;
-      backgroundMusic.play().catch(() => {
-        // Autoplay evtl. blockiert – beim nächsten Event erneut versuchen
-      });
-    });
-
-    const ensureMusicState = () => {
-      if (!backgroundMusic) return;
-      const shouldPlay =
-        document.visibilityState === "visible" && document.hasFocus();
-      if (shouldPlay) {
-        backgroundMusic.play().catch(() => {
-          // Autoplay evtl. blockiert – dann versuchen wir es beim nächsten Event erneut
-        });
-      } else {
-        backgroundMusic.pause();
-      }
+      backgroundMusic.play().catch(() => {});
     };
 
-    // Reagiere auf Fenster-Fokus/Visibility und beim Laden der Seite
-    window.addEventListener("focus", ensureMusicState);
-    window.addEventListener("blur", ensureMusicState);
-    document.addEventListener("visibilitychange", ensureMusicState);
-    window.addEventListener("load", ensureMusicState);
+    backgroundMusic.addEventListener("ended", ensureBackgroundMusicPlays);
+
+    // Wiederkehrender Guard, damit die Musik auch nach automatischen Pausen
+    // (z. B. durch Browser-Policies) ohne Nutzereingriff weiterläuft.
+    backgroundMusicPlaybackGuard = window.setInterval(ensureBackgroundMusicPlays, 2000);
 
     // Initialer Versuch
-    ensureMusicState();
+    ensureBackgroundMusicPlays();
   } catch (e) {
     console.error("Fehler beim Initialisieren der Hintergrundmusik", e);
   }
