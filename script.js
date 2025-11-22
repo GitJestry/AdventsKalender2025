@@ -51,17 +51,11 @@ function setupBackgroundMusic() {
       }
     };
 
-    // Reagiere sowohl auf Fenster-Fokus/Visibility als auch auf erste User-Interaktion
+    // Reagiere auf Fenster-Fokus/Visibility und beim Laden der Seite
     window.addEventListener("focus", ensureMusicState);
     window.addEventListener("blur", ensureMusicState);
     document.addEventListener("visibilitychange", ensureMusicState);
-
-    const userKickstart = () => {
-      ensureMusicState();
-    };
-
-    window.addEventListener("click", userKickstart, { once: true });
-    window.addEventListener("keydown", userKickstart, { once: true });
+    window.addEventListener("load", ensureMusicState);
 
     // Initialer Versuch
     ensureMusicState();
