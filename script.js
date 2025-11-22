@@ -340,6 +340,11 @@ function handleDoorClick(dayNumber) {
 
   const door = document.querySelector(`.door[data-day="${dayInt}"]`);
 
+  if (door && !door.classList.contains("completed")) {
+    door.classList.add("door-opening");
+    window.setTimeout(() => door.classList.remove("door-opening"), 750);
+  }
+
   // Zustand: geöffnet speichern
   if (door) {
     const openedDays = getOpenedDays();
