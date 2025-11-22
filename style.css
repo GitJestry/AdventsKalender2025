@@ -131,7 +131,9 @@ body::before {
   font-size: 0.78rem;
   color: var(--accent-soft);
   position: relative;
-  z-index: 2;
+  z-index: 4;
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .light-garland {
