@@ -461,21 +461,34 @@ function initSnow() {
   const container = document.querySelector(".snow-layer");
   if (!container) return;
 
-  const flakes = 70;
+  const flakes = 120;
+  const glyphs = ["❄", "✶", "✧", "✦"];
+  const colors = ["#fefefe", "#fff7d1", "#f6f7ff"];
+
   for (let i = 0; i < flakes; i++) {
     const span = document.createElement("span");
     span.className = "snowflake";
-    span.textContent = "✶";
+    span.textContent = glyphs[i % glyphs.length];
 
-    const delay = Math.random() * 10;
-    const duration = 8 + Math.random() * 10;
-    const size = 0.6 + Math.random() * 0.9;
+    const delay = Math.random() * 12;
+    const duration = 10 + Math.random() * 12;
+    const swayDuration = 4 + Math.random() * 6;
+    const spinDuration = 8 + Math.random() * 8;
+    const size = 0.55 + Math.random() * 1.1;
     const left = Math.random() * 100;
+    const swayDistance = 6 + Math.random() * 18;
+    const opacity = 0.4 + Math.random() * 0.5;
+    const color = colors[Math.floor(Math.random() * colors.length)];
 
     span.style.left = `${left}vw`;
     span.style.fontSize = `${size}rem`;
-    span.style.animationDelay = `${delay}s`;
-    span.style.animationDuration = `${duration}s`;
+    span.style.setProperty("--fall-delay", `${delay}s");
+    span.style.setProperty("--fall-duration", `${duration}s");
+    span.style.setProperty("--sway-duration", `${swayDuration}s");
+    span.style.setProperty("--sway-distance", `${swayDistance}px");
+    span.style.setProperty("--spin-duration", `${spinDuration}s");
+    span.style.setProperty("--snow-opacity", opacity);
+    span.style.setProperty("--snow-color", color);
 
     container.appendChild(span);
   }
