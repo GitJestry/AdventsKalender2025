@@ -10,7 +10,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
-  const REQUIRED_ACCURACY = 0.96;  // mindestens 96%
+  const REQUIRED_ACCURACY = 0.99;  // mindestens 96%
   const TRACK_LENGTH = 3000;
   const TRACK_DURATION = 22;
   const START_WORLD_X = 80;
@@ -86,7 +86,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const accuracySpan = document.createElement("span");
 
   timeSpan.innerHTML = `Zeit: <span class="trace-stat-em" id="traceTime">0.0s</span>`;
-  accuracySpan.innerHTML = `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. 90%)`;
+  accuracySpan.innerHTML = `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. 99%)`;
 
   stats.appendChild(timeSpan);
   stats.appendChild(accuracySpan);

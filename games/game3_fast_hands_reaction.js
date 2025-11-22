@@ -252,7 +252,7 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
     if (!good) {
       if (noteEl) {
-        noteEl.textContent = "Über 0,20 Sekunden – das zählt nicht als Treffer.";
+        noteEl.textContent = "Über 0,30 Sekunden – das zählt nicht als Treffer.";
       }
       setStatus("Knapp daneben. Die Streak startet wieder bei 0. ENTER für die nächste Runde.");
       streak = 0;
