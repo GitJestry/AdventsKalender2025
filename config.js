@@ -3,7 +3,7 @@
 // von den Kalendertüren über gameId referenziert.
 
 const ADVENT_CONFIG = {
-  recipientName: "Celine",
+  recipientName: "sunny <3",
   missionIntro:
     "Bevor du deine echte Adventstür öffnen darfst, musst du hie...innen. Jeden Tag gibt es eine kleine Challenge nur für dich. ♥",
   debugMode: true,

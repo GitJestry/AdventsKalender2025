@@ -567,15 +567,17 @@ function initSnow() {
     span.className = "snowflake";
     span.textContent = "✶";
 
-    const delay = Math.random() * 10;
     const duration = 8 + Math.random() * 10;
+    const delay = Math.random() * duration;
     const size = 0.6 + Math.random() * 0.9;
     const left = Math.random() * 100;
+    const drift = -30 + Math.random() * 60;
 
     span.style.left = `${left}vw`;
     span.style.fontSize = `${size}rem`;
-    span.style.animationDelay = `${delay}s`;
-    span.style.animationDuration = `${duration}s`;
+    span.style.setProperty("--snow-delay", `-${delay}s`);
+    span.style.setProperty("--snow-duration", `${duration}s`);
+    span.style.setProperty("--snow-drift", `${drift}px`);
 
     container.appendChild(span);
   }
