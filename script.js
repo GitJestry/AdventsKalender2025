@@ -384,6 +384,11 @@ function initCalendar() {
               <span class="door-number">${entry.day}</span>
               <span class="door-knob"></span>
             </div>
+            <div class="door-hinge" aria-hidden="true"></div>
+            <div class="door-pull-tab" aria-hidden="true">
+              <span class="door-pull-arrow">⇠</span>
+              <span class="door-pull-text">aufziehen</span>
+            </div>
             <div class="door-status">
               <div class="door-status-icon" aria-hidden="true">✓</div>
             </div>

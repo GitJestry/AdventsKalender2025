@@ -449,6 +449,17 @@ main {
   gap: 0.25rem;
 }
 
+.door-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0.6rem;
+  border-radius: calc(var(--radius-lg) - 0.9rem);
+  border: 1px dashed rgba(255, 233, 196, 0.5);
+  opacity: 0.7;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
 .door-star-dust {
   position: absolute;
   inset: 0;
@@ -601,6 +612,20 @@ main {
   }
 }
 
+@keyframes pull-tab-wiggle {
+  0% {
+    transform: translate(8%, -50%) rotate(-1deg);
+  }
+
+  50% {
+    transform: translate(4%, -50%) rotate(-4deg);
+  }
+
+  100% {
+    transform: translate(8%, -50%) rotate(-1deg);
+  }
+}
+
 .door-opening .door-inner {
   animation: door-open-pulse 0.6s ease-out;
 }
@@ -636,6 +661,68 @@ main {
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
+.door-hinge {
+  position: absolute;
+  left: 0.4rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 0.28rem;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.35)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.35));
+  box-shadow:
+    inset 1px 0 2px rgba(0, 0, 0, 0.35),
+    inset -1px 0 2px rgba(255, 255, 255, 0.1),
+    0 0 12px rgba(0, 0, 0, 0.45);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.door-pull-tab {
+  position: absolute;
+  right: -0.4rem;
+  top: 50%;
+  transform: translate(16%, -50%) rotate(-3deg);
+  transform-origin: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem 0.35rem 0.55rem;
+  border-radius: 0.9rem 1.2rem 1.2rem 0.9rem;
+  background: linear-gradient(120deg, #ffe1b0, #f7c948 60%, #d57a5e 100%);
+  color: #2d140c;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-med), transform var(--transition-med);
+  white-space: nowrap;
+}
+
+.door-pull-arrow {
+  display: inline-flex;
+  width: 0.95rem;
+  height: 0.95rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+}
+
+.door-pull-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
 /* Door state colors / Animation */
 
 .door.locked .door-panel {
@@ -655,6 +742,20 @@ main {
     inset 0 0 0 1px rgba(0, 0, 0, 0.3),
     0 10px 24px rgba(0, 0, 0, 0.7);
   border-color: rgba(255, 240, 200, 0.9);
+}
+
+.door.available:not(.open):not(.completed) .door-pull-tab {
+  opacity: 1;
+  transform: translate(6%, -50%) rotate(-1deg);
+  animation: pull-tab-wiggle 1.9s ease-in-out infinite;
+}
+
+.door-pulling .door-pull-tab,
+.door.open .door-pull-tab,
+.door.completed .door-pull-tab {
+  opacity: 0;
+  transform: translate(16%, -50%) rotate(-3deg);
+  animation: none;
 }
 
 .door.available .door-star-dust {
