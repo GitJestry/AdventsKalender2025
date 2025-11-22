@@ -435,6 +435,7 @@ main {
     inset 0 0 0 1px rgba(0, 0, 0, 0.45),
     0 0 12px rgba(0, 0, 0, 0.7);
   transform-origin: left center;
+  transform: rotateY(var(--door-angle, 0deg));
   transform-style: preserve-3d;
   transition:
     transform var(--transition-med),
@@ -640,7 +641,7 @@ main {
 .door.locked .door-panel {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.65));
   border-color: rgba(255, 255, 255, 0.35);
-  transform: rotateY(0deg);
+  --door-angle: 0deg;
 }
 
 .door.locked .door-number,
@@ -649,7 +650,7 @@ main {
 }
 
 .door.available .door-panel {
-  transform: rotateY(-20deg);
+  --door-angle: -20deg;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.3),
     0 10px 24px rgba(0, 0, 0, 0.7);
@@ -665,14 +666,14 @@ main {
 
 .door.available:hover .door-panel,
 .door.available:focus-visible .door-panel {
-  transform: rotateY(-28deg);
+  --door-angle: -28deg;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.35),
     0 14px 36px rgba(0, 0, 0, 0.85);
 }
 
 .door.open .door-panel {
-  transform: rotateY(-78deg);
+  --door-angle: -78deg;
   border-color: var(--accent);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.4),
@@ -1601,4 +1602,78 @@ main {
 .reading-challenge--completed {
   border-color: rgba(116, 235, 213, 0.8);
   box-shadow: 0 20px 32px rgba(79, 255, 136, 0.18);
+}
+
+/* Hinweis-Effekt am Türknopf für verfügbare, noch geschlossene Türen */
+.door.available:not(.open):not(.completed) .door-knob {
+  cursor: grab;
+}
+
+.door-pulling .door-knob {
+  cursor: grabbing;
+}
+
+.door.available:not(.open):not(.completed) .door-knob::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 248, 220, 0.7);
+  box-shadow: 0 0 12px rgba(247, 201, 72, 0.9);
+  opacity: 0;
+  transform: scale(0.6);
+  animation: door-knob-hint-pulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes door-knob-hint-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  35% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+/* Während des Ziehens Animationen und Transition der Tür deaktivieren */
+.door-pulling .door-panel {
+  transition: none;
+}
+
+/* "Now open" Konfetti/Stern-Effekt um den Knauf herum */
+.door-now-open-layer {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.door-now-open-star {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff4d6 0, #f7c948 45%, transparent 70%);
+  box-shadow: 0 0 6px rgba(247, 201, 72, 0.9);
+  animation: door-now-open-pop 0.8s ease-out forwards;
+}
+
+@keyframes door-now-open-pop {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.4);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx, 0px), var(--dy, -28px), 0) scale(1);
+    opacity: 0;
+  }
 }
