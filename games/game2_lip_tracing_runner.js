@@ -86,7 +86,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const accuracySpan = document.createElement("span");
 
   timeSpan.innerHTML = `Zeit: <span class="trace-stat-em" id="traceTime">0.0s</span>`;
-  accuracySpan.innerHTML = `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. 99%)`;
+  accuracySpan.innerHTML = `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. 98%)`;
 
   stats.appendChild(timeSpan);
   stats.appendChild(accuracySpan);
