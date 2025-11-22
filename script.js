@@ -38,6 +38,15 @@ function setupBackgroundMusic() {
     backgroundMusic.loop = true;
     backgroundMusic.volume = 0.16; // noch leiser (~20% weniger)
 
+    // Falls das Loop-Flag vom Browser ignoriert wird oder das Playback unterbrochen wurde,
+    // starte das Lied erneut sobald es endet.
+    backgroundMusic.addEventListener("ended", () => {
+      backgroundMusic.currentTime = 0;
+      backgroundMusic.play().catch(() => {
+        // Autoplay evtl. blockiert – beim nächsten Event erneut versuchen
+      });
+    });
+
     const ensureMusicState = () => {
       if (!backgroundMusic) return;
       const shouldPlay =
