@@ -1778,3 +1778,133 @@ main {
     opacity: 0;
   }
 }
+
+/* Spiel 5: Maiswaffel-Schießen */
+.maiswaffel-root {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 38%),
+    radial-gradient(circle at 80% 30%, rgba(255, 239, 184, 0.08), transparent 40%),
+    rgba(5, 26, 33, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.maiswaffel-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(90deg, rgba(28, 46, 54, 0.7), rgba(24, 61, 70, 0.55));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 2;
+}
+
+.maiswaffel-stat {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #ffe8bb;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.maiswaffel-info {
+  font-size: 0.9rem;
+  color: #d9f6ff;
+}
+
+.maiswaffel-btn {
+  justify-self: end;
+  padding: 0.55rem 1rem;
+  background: linear-gradient(90deg, #f7c948, #ff6b6b);
+  color: #0b1c20;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.maiswaffel-btn:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.maiswaffel-btn:active {
+  transform: translateY(0);
+}
+
+.maiswaffel-root canvas {
+  width: 100%;
+  height: 58vh;
+  max-height: 520px;
+  display: block;
+  cursor: none;
+}
+
+.maiswaffel-message {
+  padding: 0.8rem 1rem 1.1rem;
+  text-align: center;
+  color: #e6f6ff;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  min-height: 48px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+}
+
+.maiswaffel-crosshair {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+   z-index: 4;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transform: translate(-999px, -999px);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.maiswaffel-crosshair::before,
+.maiswaffel-crosshair::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.maiswaffel-crosshair::before {
+  width: 12px;
+  height: 2px;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.maiswaffel-crosshair::after {
+  width: 2px;
+  height: 12px;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 600px) {
+  .maiswaffel-hud {
+    grid-template-columns: 1fr;
+  }
+
+  .maiswaffel-btn {
+    justify-self: stretch;
+    text-align: center;
+  }
+
+  .maiswaffel-root canvas {
+    height: 320px;
+  }
+}
