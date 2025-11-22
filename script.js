@@ -12,11 +12,39 @@ const loadedGameScripts = new Set();
 const loadingGameScripts = {};
 const loadedGameStyles = new Set();
 
+function randomizeDoorStarPosition(star, palette) {
+  // neue Zufallsposition
+  star.style.setProperty("--star-x", `${Math.random() * 100}%`);
+  star.style.setProperty("--star-y", `${Math.random() * 100}%`);
+
+  // Größe / Scale
+  const size = (Math.random() * 1.2 + 0.4).toFixed(2);
+  const scale = (Math.random() * 1.4 + 0.8).toFixed(2);
+  const tilt = Math.floor(Math.random() * 360);
+
+  star.style.setProperty("--star-size", `${size}px`);
+  star.style.setProperty("--star-scale", scale);
+  star.style.setProperty("--star-tilt", `${tilt}deg`);
+
+  // Farbe
+  star.style.setProperty(
+    "--star-color",
+    palette[Math.floor(Math.random() * palette.length)]
+  );
+
+  // Burst-Effekt nur manchmal
+  if (Math.random() > 0.82) {
+    star.classList.add("door-star--burst");
+  } else {
+    star.classList.remove("door-star--burst");
+  }
+}
+
 function createDoorStarfield(starLayer) {
   if (!starLayer) return;
 
   const palette = ["#ffd166", "#ffe9a3", "#fff4d6", "#f7c948", "#ffdf85"];
-  const totalStars = 220;
+  const totalStars = 10; // nur 10 Sterne pro Tür
 
   starLayer.innerHTML = "";
 
@@ -26,27 +54,20 @@ function createDoorStarfield(starLayer) {
     const star = document.createElement("span");
     star.className = "door-star";
 
-    if (Math.random() > 0.82) {
-      star.classList.add("door-star--burst");
-    }
+    // Dauer & Verzögerung pro Stern EINMAL festlegen (für ruhigen Rhythmus)
+    const twinkle = (2.4 + Math.random() * 2.6).toFixed(2);  // 2.4s–5.0s
+    const delay = (Math.random() * twinkle).toFixed(2);      // zufälliger Offset
 
-    const size = (Math.random() * 1.2 + 0.4).toFixed(2);
-    const scale = (Math.random() * 1.4 + 0.8).toFixed(2);
-    const twinkle = (1.6 + Math.random() * 2.6).toFixed(2);
-    const delay = (Math.random() * 6).toFixed(2);
-    const tilt = Math.floor(Math.random() * 360);
-
-    star.style.setProperty("--star-size", `${size}px`);
-    star.style.setProperty("--star-scale", scale);
-    star.style.setProperty("--star-x", `${Math.random() * 100}%`);
-    star.style.setProperty("--star-y", `${Math.random() * 100}%`);
     star.style.setProperty("--star-twinkle", `${twinkle}s`);
     star.style.setProperty("--star-delay", `${delay}s`);
-    star.style.setProperty("--star-tilt", `${tilt}deg`);
-    star.style.setProperty(
-      "--star-color",
-      palette[Math.floor(Math.random() * palette.length)]
-    );
+
+    // Start-Position und Look
+    randomizeDoorStarPosition(star, palette);
+
+    // Wenn ein Glow-Zyklus zu Ende ist: neue Position + Größe + Farbe
+    star.addEventListener("animationiteration", () => {
+      randomizeDoorStarPosition(star, palette);
+    });
 
     fragment.appendChild(star);
   }

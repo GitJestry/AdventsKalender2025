@@ -23,7 +23,8 @@
   --transition-med: 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   min-height: 100%;
@@ -89,6 +90,7 @@ body::before {
   0% {
     transform: translate3d(0, -12vh, 0) rotate(0deg);
   }
+
   100% {
     transform: translate3d(var(--snow-drift), 110vh, 0) rotate(360deg);
   }
@@ -101,7 +103,7 @@ body::before {
   max-width: 1100px;
   text-align: center;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   padding-top: 0.4rem;
 }
 
@@ -129,6 +131,10 @@ body::before {
   border: 1px dashed rgba(255, 255, 255, 0.4);
   font-size: 0.78rem;
   color: var(--accent-soft);
+  position: relative;
+  /* neu */
+  z-index: 3;
+  /* neu */
 }
 
 .light-garland {
@@ -195,6 +201,7 @@ body::before {
   0% {
     transform: rotate(-6deg);
   }
+
   100% {
     transform: rotate(6deg);
   }
@@ -416,13 +423,11 @@ main {
   /* dunkler, leicht gemaserter Holz-Look */
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 40%),
-    repeating-linear-gradient(
-      90deg,
+    repeating-linear-gradient(90deg,
       rgba(0, 0, 0, 0.24) 0,
       rgba(0, 0, 0, 0.24) 2px,
       transparent 2px,
-      transparent 5px
-    ),
+      transparent 5px),
     linear-gradient(150deg, #d67a5e 0%, #a14232 42%, #4a1512 100%);
   background-blend-mode: soft-light, overlay, normal;
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -443,38 +448,42 @@ main {
   gap: 0.25rem;
 }
 
-
 .door-glow {
   position: absolute;
   inset: 0;
   border-radius: calc(var(--radius-lg) - 0.25rem);
   /* dunkler, bunter Schimmer über die ganze Tür – Eisblau + Gold + ein wenig Magenta */
   background:
-    conic-gradient(
-      from 0deg,
-      rgba(255, 222, 140, 0.38),
-      rgba(123, 200, 255, 0.42),
-      rgba(255, 160, 215, 0.35),
-      rgba(120, 255, 210, 0.35),
-      rgba(255, 222, 140, 0.38)
-    ),
-    radial-gradient(circle at 12% 0%, rgba(255, 240, 210, 0.22), transparent 60%),
-    radial-gradient(circle at 88% 10%, rgba(145, 190, 255, 0.3), transparent 62%),
-    radial-gradient(circle at 50% 115%, rgba(255, 160, 130, 0.32), transparent 70%),
+    conic-gradient(from 0deg,
+      rgba(255, 222, 140, 0.5),
+      rgba(123, 200, 255, 0.55),
+      rgba(255, 160, 215, 0.5),
+      rgba(120, 255, 210, 0.5),
+      rgba(255, 222, 140, 0.5)),
+    radial-gradient(circle at 12% 0%, rgba(255, 240, 210, 0.32), transparent 60%),
+    radial-gradient(circle at 88% 10%, rgba(145, 190, 255, 0.38), transparent 62%),
+    radial-gradient(circle at 50% 115%, rgba(255, 160, 130, 0.4), transparent 70%),
     radial-gradient(circle at 50% 50%, #020314 0%, #000000 72%);
   opacity: 0;
   mix-blend-mode: screen;
-  filter: blur(14px);
+
+  /* fester, relativ starker Glow */
+  filter: blur(11px);
+
   box-shadow:
-    0 0 30px rgba(120, 190, 255, 0.45),
-    0 0 60px rgba(255, 215, 160, 0.4),
-    0 0 90px rgba(160, 120, 255, 0.32);
+    0 0 32px rgba(120, 190, 255, 0.75),
+    0 0 70px rgba(255, 215, 160, 0.7);
+
+  /* keine Transition auf box-shadow mehr */
   transition:
     opacity var(--transition-med),
-    box-shadow var(--transition-med),
-    filter var(--transition-med),
     transform 700ms ease-out;
+
+  /* Performance-Hint */
+  will-change: opacity, transform;
 }
+
+
 
 .door-star-dust {
   position: absolute;
@@ -505,41 +514,36 @@ main {
     radial-gradient(circle at 40% 30%, rgba(255, 236, 178, 0.3), transparent 45%),
     radial-gradient(circle at 70% 70%, rgba(255, 200, 120, 0.25), transparent 55%),
     conic-gradient(from 35deg, rgba(255, 200, 90, 0.15), rgba(255, 180, 90, 0.07), transparent 50%);
-  opacity: 0.4;
+  opacity: 0.7;
   mix-blend-mode: screen;
   animation: starfieldSweep 11s ease-in-out infinite;
 }
 
 .door-star {
-  --star-size: 1px;
-  --star-scale: 1;
-  --star-color: #ffd166;
-  --star-twinkle: 2.6s;
-  --star-delay: 0s;
-  --star-x: 50%;
-  --star-y: 50%;
-  --star-tilt: 0deg;
   position: absolute;
-  width: var(--star-size);
-  height: var(--star-size);
+  /* Position wird über CSS-Variablen gesetzt */
   top: var(--star-y);
   left: var(--star-x);
-  transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+
+  width: var(--star-size);
+  height: var(--star-size);
+  pointer-events: none;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 45%, #fff 0%, var(--star-color) 38%, rgba(255, 221, 147, 0.35) 70%, transparent 75%),
-    conic-gradient(from 45deg, rgba(255, 216, 107, 0.45), rgba(255, 210, 97, 0.1), rgba(255, 216, 107, 0.35));
-  box-shadow:
-    0 0 6px rgba(255, 210, 120, 0.6),
-    0 0 18px rgba(255, 220, 140, 0.45),
-    0 0 28px rgba(255, 220, 140, 0.35);
-  filter: drop-shadow(0 0 6px rgba(255, 210, 120, 0.35));
+
+  /* Leuchtpunkt */
+  background: radial-gradient(circle, var(--star-color) 0%, transparent 60%);
+  filter: drop-shadow(0 0 4px var(--star-color));
+
+  /* wir zentrieren den Stern um (top/left) herum */
+  transform-origin: center center;
+  transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(0);
   opacity: 0;
-  animation:
-    starTwinkle var(--star-twinkle) ease-in-out infinite,
-    starFloat 16s ease-in-out infinite;
+
+  animation: starTwinkle var(--star-twinkle) ease-in-out infinite;
   animation-delay: var(--star-delay);
 }
+
+
 
 .door-star::after {
   content: "";
@@ -569,14 +573,17 @@ main {
     opacity: 0.25;
     transform: translate3d(0, 0, 0) scale(0.98);
   }
+
   30% {
     opacity: 1;
     transform: translate3d(1px, -1px, 0) scale(1.03);
   }
+
   60% {
     opacity: 0.7;
     transform: translate3d(-1px, 1px, 0) scale(1.01);
   }
+
   100% {
     opacity: 0.25;
     transform: translate3d(0, 0, 0) scale(0.98);
@@ -584,29 +591,43 @@ main {
 }
 
 @keyframes doorGlowPulse {
-  0%,
-  100% {
-    opacity: 0.65;
-    box-shadow:
-      0 0 20px rgba(120, 190, 255, 0.5),
-      0 0 38px rgba(255, 215, 160, 0.35);
+  0% {
+    opacity: 0.9;
+    transform: scale(1.02);
   }
-  50% {
+
+  23% {
     opacity: 1;
-    box-shadow:
-      0 0 32px rgba(120, 190, 255, 0.9),
-      0 0 60px rgba(255, 215, 160, 0.75),
-      0 0 74px rgba(190, 140, 255, 0.7);
+    transform: scale(1.05);
+  }
+
+  52% {
+    opacity: 0.94;
+    transform: scale(1.03);
+  }
+
+  78% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: scale(1.02);
   }
 }
+
+
 
 @keyframes door-open-pulse {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
+
   50% {
     transform: translate3d(0, -2px, 0) scale(1.03);
   }
+
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
@@ -668,10 +689,6 @@ main {
   border-color: rgba(255, 240, 200, 0.9);
 }
 
-.door.available .door-glow {
-  opacity: 0.7;
-}
-
 .door.available .door-star-dust {
   opacity: 0.95;
   filter: saturate(1.2) brightness(1.05);
@@ -697,14 +714,13 @@ main {
     0 0 28px rgba(255, 179, 71, 0.95);
 }
 
-.door.open .door-glow {
-  opacity: 1;
-}
-
 .door.available .door-glow,
 .door.open .door-glow {
-  animation: doorGlowPulse 2.6s ease-in-out infinite;
+  opacity: 0.95;
+  animation: doorGlowPulse 9.5s ease-in-out infinite;
 }
+
+
 
 .door.open .door-star-dust {
   opacity: 1;
@@ -764,12 +780,29 @@ main {
 
 
 /* Subtle per-door tint */
-.door:nth-child(6n+1) .door-inner { background-color: rgba(255, 215, 180, 0.06); }
-.door:nth-child(6n+2) .door-inner { background-color: rgba(180, 220, 255, 0.06); }
-.door:nth-child(6n+3) .door-inner { background-color: rgba(200, 255, 210, 0.06); }
-.door:nth-child(6n+4) .door-inner { background-color: rgba(250, 200, 255, 0.06); }
-.door:nth-child(6n+5) .door-inner { background-color: rgba(255, 210, 200, 0.06); }
-.door:nth-child(6n)   .door-inner { background-color: rgba(210, 210, 255, 0.06); }
+.door:nth-child(6n+1) .door-inner {
+  background-color: rgba(255, 215, 180, 0.06);
+}
+
+.door:nth-child(6n+2) .door-inner {
+  background-color: rgba(180, 220, 255, 0.06);
+}
+
+.door:nth-child(6n+3) .door-inner {
+  background-color: rgba(200, 255, 210, 0.06);
+}
+
+.door:nth-child(6n+4) .door-inner {
+  background-color: rgba(250, 200, 255, 0.06);
+}
+
+.door:nth-child(6n+5) .door-inner {
+  background-color: rgba(255, 210, 200, 0.06);
+}
+
+.door:nth-child(6n) .door-inner {
+  background-color: rgba(210, 210, 255, 0.06);
+}
 
 /* LOCKED MESSAGE */
 
@@ -802,6 +835,7 @@ main {
     opacity: 0;
     transform: translate(-50%, 10px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -861,6 +895,7 @@ main {
     transform: translateY(10px) scale(0.96);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -872,6 +907,7 @@ main {
     transform: translateY(18px) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -953,7 +989,7 @@ main {
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 65%),
-              rgba(0, 0, 0, 0.45);
+    rgba(0, 0, 0, 0.45);
   padding: 0.75rem 0.9rem 0.8rem;
   min-height: 360px;
 }
@@ -1235,7 +1271,7 @@ main {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background: radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 65%),
-              rgba(0, 0, 0, 0.6);
+    rgba(0, 0, 0, 0.6);
   flex: 1 1 auto;
 }
 
@@ -1387,6 +1423,7 @@ main {
   font-size: 0.8rem;
   color: var(--accent-soft);
 }
+
 .game-win-overlay.hidden {
   opacity: 0;
   pointer-events: none;
@@ -1434,10 +1471,12 @@ main {
     transform: rotate(0deg) scale(1.02);
     opacity: 0.28;
   }
+
   50% {
     transform: rotate(14deg) scale(1.08);
     opacity: 0.52;
   }
+
   100% {
     transform: rotate(32deg) scale(1.02);
     opacity: 0.28;
@@ -1448,9 +1487,11 @@ main {
   0% {
     transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
   }
+
   50% {
     transform: translate(calc(-50% + 0.8%), calc(-50% - 0.6%)) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.02));
   }
+
   100% {
     transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
   }
@@ -1458,26 +1499,36 @@ main {
 
 @keyframes starTwinkle {
   0% {
-    opacity: 0.25;
-    filter: drop-shadow(0 0 2px rgba(255, 210, 120, 0.2));
-    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.92));
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(0.0);
+    /* unsichtbar klein */
   }
-  46% {
+
+  20% {
     opacity: 1;
-    filter: drop-shadow(0 0 14px rgba(255, 219, 140, 0.9));
-    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.32));
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.7));
+    /* wächst rein */
   }
-  78% {
-    opacity: 0.78;
-    filter: drop-shadow(0 0 10px rgba(255, 210, 120, 0.6));
-    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.08));
+
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+    /* voller Glow */
   }
+
+  70% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.4));
+    /* wird wieder kleiner */
+  }
+
   100% {
-    opacity: 0.35;
-    filter: drop-shadow(0 0 4px rgba(255, 190, 100, 0.35));
-    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.98));
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(0.0);
+    /* komplett weg! */
   }
 }
+
 
 
 /* Schnelle Hände – Reaktionsspiel */
@@ -1520,9 +1571,11 @@ main {
   0% {
     transform: scale(0.3) translateY(30px);
   }
+
   55% {
     transform: scale(1.08) translateY(-6px);
   }
+
   100% {
     transform: scale(1) translateY(0);
   }
@@ -1549,4 +1602,3 @@ main {
 .reaction-time-neutral {
   color: var(--text-muted);
 }
-
