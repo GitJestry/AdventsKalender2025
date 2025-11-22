@@ -25,6 +25,11 @@ const ADVENT_CONFIG = {
       id: "fast_hands_reaction",
       script: "games/game3_fast_hands_reaction.js",
       style: null
+    },
+    juli_crime_reading: {
+      id: "juli_crime_reading",
+      script: "games/game4_juli_reading.js",
+      style: null
     }
   },
 
@@ -56,6 +61,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "fast_hands_reaction"
+    },
+    {
+      day: 4,
+      title: "Lese-Challenge mit Juli",
+      giftLabel: "Im echten Kalender: Zeit mit Juli <3",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "juli_crime_reading"
     }
   ]
 };
