@@ -448,23 +448,6 @@ main {
   gap: 0.25rem;
 }
 
-.door-glow {
-  position: absolute;
-  inset: 0;
-  border-radius: calc(var(--radius-lg) - 0.25rem);
-  /* dunkler, bunter Schimmer über die ganze Tür – Eisblau + Gold + ein wenig Magenta */
-  background: none;
-  opacity: 0;
-  mix-blend-mode: normal;
-  filter: none;
-  box-shadow: none;
-  transition: none;
-  will-change: auto;
-  display: none;
-}
-
-
-
 .door-star-dust {
   position: absolute;
   inset: 0;
@@ -480,10 +463,6 @@ main {
     transform 900ms ease-out,
     box-shadow 900ms ease-out;
   box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.65);
-}
-
-.door-star-dust::after {
-  content: none;
 }
 
 .door-star {
@@ -700,27 +679,11 @@ main {
     0 0 28px rgba(0, 0, 0, 0.85);
 }
 
-.door.available .door-glow,
-.door.open .door-glow {
-  opacity: 0;
-  animation: none;
-  display: none;
-}
-
-
-
 .door.open .door-star-dust {
   opacity: 1;
   filter: saturate(1.4) brightness(1.2);
   transform: translateZ(0) scale(1.01);
   box-shadow: inset 0 0 36px rgba(0, 0, 0, 0.55);
-}
-
-.door.completed .door-glow {
-  opacity: 0;
-  filter: blur(0);
-  box-shadow: none;
-  animation: none;
 }
 
 .door.completed .door-star-dust {

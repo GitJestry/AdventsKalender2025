@@ -242,7 +242,6 @@ function initCalendar() {
       door.innerHTML = `
         <div class="door-inner">
           <div class="door-frame">
-            <div class="door-glow"></div>
             <div class="door-star-dust"></div>
             <div class="door-panel">
               <span class="door-number">${entry.day}</span>
