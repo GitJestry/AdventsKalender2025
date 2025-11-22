@@ -480,24 +480,88 @@ main {
   position: absolute;
   inset: 0;
   border-radius: calc(var(--radius-lg) - 0.35rem);
-  /* dichter Sternen-/Funken-Himmel: bunt, aber auf sehr dunklem Grund – Eisblau + Gold + Magenta */
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0, rgba(255, 255, 255, 0) 55%),
-    radial-gradient(circle, rgba(185, 215, 255, 0.9) 0, rgba(185, 215, 255, 0) 55%),
-    radial-gradient(circle, rgba(255, 215, 155, 0.9) 0, rgba(255, 215, 155, 0) 55%),
-    radial-gradient(circle, rgba(210, 180, 255, 0.9) 0, rgba(210, 180, 255, 0) 55%),
-    radial-gradient(circle, rgba(255, 180, 220, 0.85) 0, rgba(255, 180, 220, 0) 55%);
-  background-size: 5px 5px, 8px 8px, 13px 13px, 18px 18px, 24px 24px;
-  background-position: 0 0, 14px -8px, -18px 10px, 18px 16px, -12px -6px;
-  background-repeat: repeat;
-  mix-blend-mode: screen;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 210, 120, 0.16), transparent 42%),
+    radial-gradient(circle at 80% 90%, rgba(255, 150, 64, 0.12), transparent 45%),
+    radial-gradient(circle at 40% 60%, rgba(255, 236, 193, 0.1), transparent 50%),
+    #05040c;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  filter: brightness(1.2);
+  filter: saturate(1.05) brightness(0.95);
   transition:
     opacity var(--transition-med),
     filter 900ms ease-out,
-    transform 900ms ease-out;
+    transform 900ms ease-out,
+    box-shadow 900ms ease-out;
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.65);
+}
+
+.door-star-dust::after {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(circle at 40% 30%, rgba(255, 236, 178, 0.3), transparent 45%),
+    radial-gradient(circle at 70% 70%, rgba(255, 200, 120, 0.25), transparent 55%),
+    conic-gradient(from 35deg, rgba(255, 200, 90, 0.15), rgba(255, 180, 90, 0.07), transparent 50%);
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  animation: starfieldSweep 11s ease-in-out infinite;
+}
+
+.door-star {
+  --star-size: 1px;
+  --star-scale: 1;
+  --star-color: #ffd166;
+  --star-twinkle: 2.6s;
+  --star-delay: 0s;
+  --star-x: 50%;
+  --star-y: 50%;
+  --star-tilt: 0deg;
+  position: absolute;
+  width: var(--star-size);
+  height: var(--star-size);
+  top: var(--star-y);
+  left: var(--star-x);
+  transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 45%, #fff 0%, var(--star-color) 38%, rgba(255, 221, 147, 0.35) 70%, transparent 75%),
+    conic-gradient(from 45deg, rgba(255, 216, 107, 0.45), rgba(255, 210, 97, 0.1), rgba(255, 216, 107, 0.35));
+  box-shadow:
+    0 0 6px rgba(255, 210, 120, 0.6),
+    0 0 18px rgba(255, 220, 140, 0.45),
+    0 0 28px rgba(255, 220, 140, 0.35);
+  filter: drop-shadow(0 0 6px rgba(255, 210, 120, 0.35));
+  opacity: 0;
+  animation:
+    starTwinkle var(--star-twinkle) ease-in-out infinite,
+    starFloat 16s ease-in-out infinite;
+  animation-delay: var(--star-delay);
+}
+
+.door-star::after {
+  content: "";
+  position: absolute;
+  inset: -220%;
+  background:
+    radial-gradient(circle, rgba(255, 225, 160, 0.25) 0 45%, transparent 70%),
+    linear-gradient(90deg, rgba(255, 225, 120, 0.32), transparent 40%, rgba(255, 225, 120, 0.32)),
+    linear-gradient(0deg, rgba(255, 225, 120, 0.24), transparent 45%, rgba(255, 225, 120, 0.24));
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  transform: rotate(8deg) scale(0.7);
+}
+
+.door-star--burst {
+  --star-size: 2.6px;
+  --star-scale: 1.6;
+  --star-twinkle: 3.8s;
+  box-shadow:
+    0 0 14px rgba(255, 219, 140, 0.85),
+    0 0 32px rgba(255, 205, 120, 0.6),
+    0 0 52px rgba(255, 215, 160, 0.48);
 }
 
 @keyframes twinkle {
@@ -609,10 +673,12 @@ main {
 }
 
 .door.available .door-star-dust {
-  opacity: 0.85;
-  animation:
-    doorGlitterDrift 16s linear infinite,
-    doorGlitterTwinkle 1.9s ease-in-out infinite alternate;
+  opacity: 0.95;
+  filter: saturate(1.2) brightness(1.05);
+  transform: translateZ(0) scale(1.005);
+  box-shadow:
+    inset 0 0 26px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(255, 210, 120, 0.25);
 }
 
 .door.available:hover .door-panel,
@@ -642,9 +708,11 @@ main {
 
 .door.open .door-star-dust {
   opacity: 1;
-  animation:
-    doorGlitterDrift 11s linear infinite,
-    doorGlitterTwinkle 1.5s ease-in-out infinite alternate;
+  filter: saturate(1.4) brightness(1.2);
+  transform: translateZ(0) scale(1.01);
+  box-shadow:
+    inset 0 0 36px rgba(0, 0, 0, 0.55),
+    0 0 38px rgba(255, 215, 140, 0.3);
 }
 
 .door.completed .door-glow {
@@ -1361,30 +1429,53 @@ main {
 
 
 
-@keyframes doorGlitterDrift {
+@keyframes starfieldSweep {
   0% {
-    background-position: 0 0, 14px -8px, -18px 10px, 18px 16px;
+    transform: rotate(0deg) scale(1.02);
+    opacity: 0.28;
   }
   50% {
-    background-position: 12px -16px, -4px 18px, 22px -6px, -14px 8px;
+    transform: rotate(14deg) scale(1.08);
+    opacity: 0.52;
   }
   100% {
-    background-position: -10px 6px, 24px 0, -24px 16px, 10px -12px;
+    transform: rotate(32deg) scale(1.02);
+    opacity: 0.28;
   }
 }
 
-@keyframes doorGlitterTwinkle {
+@keyframes starFloat {
   0% {
-    opacity: 0.45;
-    filter: brightness(0.8);
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
   }
-  40% {
-    opacity: 0.95;
-    filter: brightness(1.45);
+  50% {
+    transform: translate(calc(-50% + 0.8%), calc(-50% - 0.6%)) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.02));
   }
   100% {
-    opacity: 0.6;
-    filter: brightness(1.0);
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+  }
+}
+
+@keyframes starTwinkle {
+  0% {
+    opacity: 0.25;
+    filter: drop-shadow(0 0 2px rgba(255, 210, 120, 0.2));
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.92));
+  }
+  46% {
+    opacity: 1;
+    filter: drop-shadow(0 0 14px rgba(255, 219, 140, 0.9));
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.32));
+  }
+  78% {
+    opacity: 0.78;
+    filter: drop-shadow(0 0 10px rgba(255, 210, 120, 0.6));
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.08));
+  }
+  100% {
+    opacity: 0.35;
+    filter: drop-shadow(0 0 4px rgba(255, 190, 100, 0.35));
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.98));
   }
 }
 
