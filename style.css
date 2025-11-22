@@ -116,6 +116,7 @@ body::before {
   filter: blur(22px);
   opacity: 0.8;
   z-index: 0;
+  pointer-events: none;
 }
 
 .debug-bar {
@@ -129,6 +130,8 @@ body::before {
   border: 1px dashed rgba(255, 255, 255, 0.4);
   font-size: 0.78rem;
   color: var(--accent-soft);
+  position: relative;
+  z-index: 2;
 }
 
 .light-garland {
