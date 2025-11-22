@@ -16,7 +16,8 @@ function createDoorStarfield(starLayer) {
   if (!starLayer) return;
 
   const palette = ["#ffd166", "#ffe9a3", "#fff4d6", "#f7c948", "#ffdf85"];
-  const totalStars = 220;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const totalStars = prefersReducedMotion ? 60 : 90;
 
   starLayer.innerHTML = "";
 
@@ -30,8 +31,8 @@ function createDoorStarfield(starLayer) {
       star.classList.add("door-star--burst");
     }
 
-    const size = (Math.random() * 1.2 + 0.4).toFixed(2);
-    const scale = (Math.random() * 1.4 + 0.8).toFixed(2);
+    const size = (Math.random() * 1.4 + 0.5).toFixed(2);
+    const scale = (Math.random() * 1.6 + 0.9).toFixed(2);
     const twinkle = (1.6 + Math.random() * 2.6).toFixed(2);
     const delay = (Math.random() * 6).toFixed(2);
     const tilt = Math.floor(Math.random() * 360);
