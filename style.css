@@ -464,15 +464,14 @@ main {
     radial-gradient(circle at 50% 50%, #020314 0%, #000000 72%);
   opacity: 0;
   mix-blend-mode: screen;
-  filter: blur(14px);
+  filter: blur(10px) saturate(1.05);
   box-shadow:
-    0 0 30px rgba(120, 190, 255, 0.45),
-    0 0 60px rgba(255, 215, 160, 0.4),
-    0 0 90px rgba(160, 120, 255, 0.32);
+    0 0 26px rgba(120, 190, 255, 0.45),
+    0 0 54px rgba(255, 215, 160, 0.36);
+  transform: translateZ(0) scale(0.99);
+  will-change: transform, opacity;
   transition:
     opacity var(--transition-med),
-    box-shadow var(--transition-med),
-    filter var(--transition-med),
     transform 700ms ease-out;
 }
 
@@ -587,16 +586,11 @@ main {
   0%,
   100% {
     opacity: 0.65;
-    box-shadow:
-      0 0 20px rgba(120, 190, 255, 0.5),
-      0 0 38px rgba(255, 215, 160, 0.35);
+    transform: translateZ(0) scale(0.99);
   }
   50% {
     opacity: 1;
-    box-shadow:
-      0 0 32px rgba(120, 190, 255, 0.9),
-      0 0 60px rgba(255, 215, 160, 0.75),
-      0 0 74px rgba(190, 140, 255, 0.7);
+    transform: translateZ(0) scale(1.03);
   }
 }
 
