@@ -453,34 +453,14 @@ main {
   inset: 0;
   border-radius: calc(var(--radius-lg) - 0.25rem);
   /* dunkler, bunter Schimmer über die ganze Tür – Eisblau + Gold + ein wenig Magenta */
-  background:
-    conic-gradient(from 0deg,
-      rgba(255, 222, 140, 0.5),
-      rgba(123, 200, 255, 0.55),
-      rgba(255, 160, 215, 0.5),
-      rgba(120, 255, 210, 0.5),
-      rgba(255, 222, 140, 0.5)),
-    radial-gradient(circle at 12% 0%, rgba(255, 240, 210, 0.32), transparent 60%),
-    radial-gradient(circle at 88% 10%, rgba(145, 190, 255, 0.38), transparent 62%),
-    radial-gradient(circle at 50% 115%, rgba(255, 160, 130, 0.4), transparent 70%),
-    radial-gradient(circle at 50% 50%, #020314 0%, #000000 72%);
+  background: none;
   opacity: 0;
-  mix-blend-mode: screen;
-
-  /* fester, relativ starker Glow */
-  filter: blur(11px);
-
-  box-shadow:
-    0 0 32px rgba(120, 190, 255, 0.75),
-    0 0 70px rgba(255, 215, 160, 0.7);
-
-  /* keine Transition auf box-shadow mehr */
-  transition:
-    opacity var(--transition-med),
-    transform 700ms ease-out;
-
-  /* Performance-Hint */
-  will-change: opacity, transform;
+  mix-blend-mode: normal;
+  filter: none;
+  box-shadow: none;
+  transition: none;
+  will-change: auto;
+  display: none;
 }
 
 
