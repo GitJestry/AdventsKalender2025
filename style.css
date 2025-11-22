@@ -327,27 +327,27 @@ main {
   position: absolute;
   inset: 0;
   border-radius: calc(var(--radius-lg) - 0.25rem);
-  /* dunkler, bunter Schimmer über die ganze Tür – Eisblau + Gold + ein wenig Magenta */
+  /* Weihnachtlicher Kranz-Schimmer: warmes Gold, Tannengrün, Beerenrot & Eisblau */
   background:
     conic-gradient(
-      from 0deg,
-      rgba(255, 222, 140, 0.38),
-      rgba(123, 200, 255, 0.42),
-      rgba(255, 160, 215, 0.35),
-      rgba(120, 255, 210, 0.35),
-      rgba(255, 222, 140, 0.38)
+      from -40deg,
+      rgba(255, 230, 170, 0.42),
+      rgba(140, 220, 190, 0.42),
+      rgba(255, 140, 150, 0.36),
+      rgba(130, 210, 255, 0.36),
+      rgba(255, 230, 170, 0.42)
     ),
-    radial-gradient(circle at 12% 0%, rgba(255, 240, 210, 0.22), transparent 60%),
-    radial-gradient(circle at 88% 10%, rgba(145, 190, 255, 0.3), transparent 62%),
-    radial-gradient(circle at 50% 115%, rgba(255, 160, 130, 0.32), transparent 70%),
-    radial-gradient(circle at 50% 50%, #020314 0%, #000000 72%);
+    radial-gradient(circle at 15% -5%, rgba(255, 255, 255, 0.35), transparent 55%),
+    radial-gradient(circle at 85% 0%, rgba(255, 190, 150, 0.3), transparent 60%),
+    radial-gradient(circle at 50% 118%, rgba(110, 180, 140, 0.32), transparent 70%),
+    radial-gradient(circle at 50% 50%, #020314 0%, #000000 70%);
   opacity: 0;
   mix-blend-mode: screen;
-  filter: blur(14px);
+  filter: blur(16px) saturate(1.12);
   box-shadow:
-    0 0 30px rgba(120, 190, 255, 0.45),
-    0 0 60px rgba(255, 215, 160, 0.4),
-    0 0 90px rgba(160, 120, 255, 0.32);
+    0 0 32px rgba(255, 214, 170, 0.55),
+    0 0 64px rgba(140, 210, 255, 0.45),
+    0 0 96px rgba(140, 200, 170, 0.45);
   transition:
     opacity var(--transition-med),
     box-shadow var(--transition-med),
@@ -361,13 +361,14 @@ main {
   border-radius: calc(var(--radius-lg) - 0.35rem);
   /* dichter Sternen-/Funken-Himmel: bunt, aber auf sehr dunklem Grund – Eisblau + Gold + Magenta */
   background-image:
+    radial-gradient(circle, rgba(170, 230, 190, 0.95) 0, rgba(170, 230, 190, 0) 55%),
     radial-gradient(circle, rgba(255, 255, 255, 0.95) 0, rgba(255, 255, 255, 0) 55%),
     radial-gradient(circle, rgba(185, 215, 255, 0.9) 0, rgba(185, 215, 255, 0) 55%),
     radial-gradient(circle, rgba(255, 215, 155, 0.9) 0, rgba(255, 215, 155, 0) 55%),
     radial-gradient(circle, rgba(210, 180, 255, 0.9) 0, rgba(210, 180, 255, 0) 55%),
     radial-gradient(circle, rgba(255, 180, 220, 0.85) 0, rgba(255, 180, 220, 0) 55%);
-  background-size: 5px 5px, 8px 8px, 13px 13px, 18px 18px, 24px 24px;
-  background-position: 0 0, 14px -8px, -18px 10px, 18px 16px, -12px -6px;
+  background-size: 4px 4px, 6px 6px, 9px 9px, 13px 13px, 18px 18px, 24px 24px;
+  background-position: 6px -10px, 0 0, 14px -8px, -18px 10px, 18px 16px, -12px -6px;
   background-repeat: repeat;
   mix-blend-mode: screen;
   opacity: 0;
@@ -401,17 +402,34 @@ main {
 @keyframes doorGlowPulse {
   0%,
   100% {
-    opacity: 0.65;
+    opacity: 0.7;
     box-shadow:
-      0 0 20px rgba(120, 190, 255, 0.5),
-      0 0 38px rgba(255, 215, 160, 0.35);
+      0 0 22px rgba(255, 214, 170, 0.7),
+      0 0 38px rgba(125, 210, 255, 0.45),
+      0 0 46px rgba(120, 200, 155, 0.4);
   }
   50% {
     opacity: 1;
     box-shadow:
-      0 0 32px rgba(120, 190, 255, 0.9),
-      0 0 60px rgba(255, 215, 160, 0.75),
-      0 0 74px rgba(190, 140, 255, 0.7);
+      0 0 34px rgba(255, 230, 185, 0.9),
+      0 0 62px rgba(255, 150, 165, 0.7),
+      0 0 82px rgba(110, 200, 155, 0.65),
+      0 0 96px rgba(130, 210, 255, 0.55);
+  }
+}
+
+@keyframes doorGlowDrift {
+  0% {
+    transform: scale(1) rotate(-1deg);
+    filter: blur(16px) saturate(1.05);
+  }
+  50% {
+    transform: scale(1.04) rotate(1deg);
+    filter: blur(18px) saturate(1.2);
+  }
+  100% {
+    transform: scale(1) rotate(-1deg);
+    filter: blur(16px) saturate(1.05);
   }
 }
 
@@ -513,7 +531,9 @@ main {
 
 .door.available .door-glow,
 .door.open .door-glow {
-  animation: doorGlowPulse 2.6s ease-in-out infinite;
+  animation:
+    doorGlowPulse 2.6s ease-in-out infinite,
+    doorGlowDrift 13s ease-in-out infinite;
 }
 
 .door.open .door-star-dust {
@@ -1239,13 +1259,13 @@ main {
 
 @keyframes doorGlitterDrift {
   0% {
-    background-position: 0 0, 14px -8px, -18px 10px, 18px 16px;
+    background-position: 6px -10px, 0 0, 14px -8px, -18px 10px, 18px 16px, -12px -6px;
   }
   50% {
-    background-position: 12px -16px, -4px 18px, 22px -6px, -14px 8px;
+    background-position: 2px -2px, 12px -16px, -4px 18px, 22px -6px, -14px 8px, 14px 6px;
   }
   100% {
-    background-position: -10px 6px, 24px 0, -24px 16px, 10px -12px;
+    background-position: -8px 8px, -10px 6px, 24px 0, -24px 16px, 10px -12px, -16px -4px;
   }
 }
 
