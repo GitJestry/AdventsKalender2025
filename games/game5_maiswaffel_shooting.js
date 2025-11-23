@@ -5,6 +5,7 @@ const MAI_TARGET_SCORE = 20; // Zielpunktzahl zum Gewinnen
 const MAI_GOLDEN_BONUS = 3; // Punkte für goldene Maiswaffeln
 const MAI_MISS_TIME_PENALTY = 0.7; // Sekunden, die bei einem Fehlschuss verloren gehen
 const MAI_BASE_SPEED = 120; // Basisspeed in px/s
+const MAI_CROSSHAIR_SIZE = 63; // px – 30% kleiner als bisher
 
 window.AdventGames = window.AdventGames || {};
 
@@ -44,6 +45,14 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     <div class="maiwaffel-hint">Triff die fliegenden Maiswaffeln, Fehlschüsse kosten Zeit! Goldene bringen Extra-Punkte.</div>
   `;
 
+  const controls = document.createElement("div");
+  controls.className = "maiwaffel-controls";
+  const startButton = document.createElement("button");
+  startButton.className = "maiwaffel-button maiwaffel-start";
+  startButton.textContent = "Spiel starten";
+  controls.appendChild(startButton);
+  header.appendChild(controls);
+
   const canvasWrap = document.createElement("div");
   canvasWrap.className = "maiwaffel-canvas-wrap";
 
@@ -52,6 +61,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   canvasWrap.appendChild(canvas);
 
   const crosshair = document.createElement("div");
+  const crosshairRadius = MAI_CROSSHAIR_SIZE / 2;
   crosshair.className = "maiwaffel-crosshair";
   crosshair.innerHTML = '<span class="maiwaffel-crosshair-dot"></span>';
   canvasWrap.appendChild(crosshair);
@@ -84,14 +94,15 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       .maiwaffel-stats { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.95rem; align-items: center; }
       .maiwaffel-stats span { background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
       .maiwaffel-hint { margin-top: 8px; font-size: 0.9rem; color: #d8e6ff; }
+      .maiwaffel-controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
       .maiwaffel-canvas-wrap { position: relative; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(180deg, #0c2138 0%, #0a1a2e 60%, #081322 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.45); }
       .maiwaffel-canvas { display: block; width: 100%; height: 420px; }
       .maiwaffel-miss { animation: maiwaffel-miss 0.15s ease-in-out; }
-      .maiwaffel-crosshair { position: absolute; width: 90px; height: 90px; border: 2px solid rgba(255,255,255,0.9); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 0 18px rgba(0,255,255,0.25); mix-blend-mode: screen; }
+      .maiwaffel-crosshair { position: absolute; width: ${MAI_CROSSHAIR_SIZE}px; height: ${MAI_CROSSHAIR_SIZE}px; border: 2px solid rgba(255,255,255,0.9); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 0 18px rgba(0,255,255,0.25); mix-blend-mode: screen; }
       .maiwaffel-crosshair::before, .maiwaffel-crosshair::after { content: ""; position: absolute; background: rgba(255,255,255,0.9); }
-      .maiwaffel-crosshair::before { width: 2px; height: 90px; left: 50%; top: 0; transform: translateX(-50%); }
-      .maiwaffel-crosshair::after { height: 2px; width: 90px; top: 50%; left: 0; transform: translateY(-50%); }
-      .maiwaffel-crosshair-dot { position: absolute; width: 9px; height: 9px; background: #ffefd0; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px rgba(255, 230, 180, 0.8); }
+      .maiwaffel-crosshair::before { width: 2px; height: ${MAI_CROSSHAIR_SIZE}px; left: 50%; top: 0; transform: translateX(-50%); }
+      .maiwaffel-crosshair::after { height: 2px; width: ${MAI_CROSSHAIR_SIZE}px; top: 50%; left: 0; transform: translateY(-50%); }
+      .maiwaffel-crosshair-dot { position: absolute; width: 7px; height: 7px; background: #ffefd0; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px rgba(255, 230, 180, 0.8); }
       .maiwaffel-result { position: absolute; inset: 0; background: rgba(0, 7, 20, 0.72); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
       .maiwaffel-result.hidden { display: none; }
       .maiwaffel-result-box { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12)); padding: 20px 24px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center; color: #f2f6ff; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 420px; }
@@ -192,8 +203,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   }
 
   function spawnInitial() {
-    for (let i = 0; i < 6; i++) {
-      spawnWafel(i === 5);
+    for (let i = 0; i < 4; i++) {
+      spawnWafel(i === 3);
     }
   }
 
@@ -220,7 +231,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       }
     }
 
-    if (wafels.length < 8) {
+    if (wafels.length < 5) {
       spawnWafel();
     }
 
@@ -304,6 +315,11 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     if (hsEl) hsEl.textContent = `Highscore: ${highscore}`;
   }
 
+  function setStartButtonState(label, disabled = false) {
+    startButton.textContent = label;
+    startButton.disabled = disabled;
+  }
+
   function playCrunch(isGolden) {
     try {
       const ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
@@ -349,7 +365,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   }
 
   function handleShot(evt) {
-    if (!isRunning) startGame();
+    if (!isRunning) return;
     const rect = canvas.getBoundingClientRect();
     const x = evt.clientX - rect.left;
     const y = evt.clientY - rect.top;
@@ -359,7 +375,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       const wafel = wafels[i];
       const dx = wafel.x - x;
       const dy = wafel.y - y;
-      if (Math.hypot(dx, dy) <= wafel.radius) {
+      if (Math.hypot(dx, dy) <= crosshairRadius) {
         hitIndex = i;
         break;
       }
@@ -385,11 +401,14 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   }
 
   function startGame() {
+    if (isRunning) return;
     window.cancelAnimationFrame(animationFrame);
     window.clearInterval(countdownInterval);
     resetState();
     isRunning = true;
     lastTimestamp = null;
+    crosshair.classList.remove("hidden");
+    setStartButtonState("Runde läuft...", true);
     animationFrame = window.requestAnimationFrame(loop);
     countdownInterval = window.setInterval(() => {
       timeLeft = Math.max(0, timeLeft - 0.1);
@@ -400,14 +419,16 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     }, 100);
   }
 
-  function resetState() {
+  function resetState(spawnTargets = true) {
     wafels.length = 0;
     crumbs.length = 0;
     timeLeft = MAI_GAME_DURATION;
     score = 0;
     speedMultiplier = 1;
     drawBackground();
-    spawnInitial();
+    if (spawnTargets) {
+      spawnInitial();
+    }
     updateUi();
     result.classList.add("hidden");
   }
@@ -419,6 +440,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     if (countdownInterval) window.clearInterval(countdownInterval);
     animationFrame = null;
     countdownInterval = null;
+    crosshair.classList.add("hidden");
+    setStartButtonState("Erneut spielen", false);
 
     if (score > highscore) {
       highscore = score;
@@ -448,11 +471,16 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   canvas.addEventListener("pointermove", moveCrosshair);
   canvas.addEventListener("click", handleShot);
   root.addEventListener("mouseleave", () => crosshair.classList.add("hidden"));
-  root.addEventListener("mouseenter", () => crosshair.classList.remove("hidden"));
+  root.addEventListener("mouseenter", () => {
+    if (isRunning) crosshair.classList.remove("hidden");
+  });
+  startButton.addEventListener("click", startGame);
   result.querySelector(".maiwaffel-restart")?.addEventListener("click", startGame);
 
   resizeCanvas();
-  startGame();
+  resetState(false);
+  setStartButtonState("Spiel starten");
+  crosshair.classList.add("hidden");
 
   window.addEventListener("resize", resizeCanvas);
 
