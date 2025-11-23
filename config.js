@@ -30,6 +30,11 @@ const ADVENT_CONFIG = {
       id: "juli_crime_reading",
       script: "games/game4_juli_reading.js",
       style: null
+    },
+    maiswaffel_shooting: {
+      id: "maiswaffel_shooting",
+      script: "games/game5_maiswaffel_shooting.js",
+      style: null
     }
   },
 
@@ -70,6 +75,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "juli_crime_reading"
+    },
+    {
+      day: 5,
+      title: "Maiswaffel schießen",
+      giftLabel: "Im echten Kalender: crunchy Überraschung",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "maiswaffel_shooting"
     }
   ]
 };
