@@ -382,6 +382,7 @@ function initCalendar() {
     .forEach((entry) => {
       const door = document.createElement("button");
       door.className = "door";
+      door.classList.add(`day-${entry.day}`);
       door.type = "button";
       door.dataset.day = String(entry.day);
 
