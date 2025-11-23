@@ -385,6 +385,10 @@ function initCalendar() {
       door.type = "button";
       door.dataset.day = String(entry.day);
 
+      if (entry.day === 6) {
+        door.classList.add("door-nikolaus");
+      }
+
       const isAvailable = isDayAvailable(entry.day);
       const isCompleted = completedDays.includes(entry.day);
       const isOpened = isCompleted || openedDays.includes(entry.day);

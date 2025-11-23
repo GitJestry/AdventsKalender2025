@@ -35,6 +35,11 @@ const ADVENT_CONFIG = {
       id: "maiswaffel_shooting",
       script: "games/game5_maiswaffel_shooting.js",
       style: null
+    },
+    nikolaus_capy_sprint: {
+      id: "nikolaus_capy_sprint",
+      script: "games/game6_nikolaus_sprint.js",
+      style: null
     }
   },
 
@@ -84,6 +89,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "maiswaffel_shooting"
+    },
+    {
+      day: 6,
+      title: "Nikolaus Sprint – Capybara Cup",
+      giftLabel: "Im echten Kalender: Nikolaus-Edition",
+      story: "Der Nikolaus steht auf schnelle Capybaras – gewinne das Rennen und sichere dir den Hinweis!",
+      memory: "Das Capy mit der Weihnachtsmütze drückt dir die Daumen.",
+      magicLetter: "N",
+      gameId: "nikolaus_capy_sprint"
     }
   ]
 };
