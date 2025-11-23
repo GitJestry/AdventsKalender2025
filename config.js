@@ -40,6 +40,11 @@ const ADVENT_CONFIG = {
       id: "capybara_sprint",
       script: "games/game6_capybara_sprint.js",
       style: null
+    },
+    wire_spring_runner: {
+      id: "wire_spring_runner",
+      script: "games/game7_wire_runner.js",
+      style: null
     }
   },
 
@@ -98,6 +103,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "capybara_sprint"
+    },
+    {
+      day: 7,
+      title: "Goldener Draht-Sprint",
+      giftLabel: "Im echten Kalender: funkelt in Gold",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "wire_spring_runner"
     }
   ]
 };
