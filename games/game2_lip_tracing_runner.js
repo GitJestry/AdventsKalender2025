@@ -66,6 +66,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   }));
 
   let animationFrameId = null;
+  const audioApi = window.AdventAudio || {};
+  let penSound = null;
 
   container.innerHTML = "";
 
@@ -147,6 +149,44 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   container.appendChild(root);
 
   ctx = canvas.getContext("2d");
+
+  function ensurePenSound() {
+    if (!audioApi.getContext) return null;
+    if (penSound) return penSound;
+    const ctxAudio = audioApi.getContext();
+    if (!ctxAudio) return null;
+    ctxAudio.resume?.();
+
+    const osc = ctxAudio.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = 420;
+
+    const gain = ctxAudio.createGain();
+    gain.gain.value = 0;
+
+    osc.connect(gain).connect(ctxAudio.destination);
+    osc.start();
+    penSound = { ctx: ctxAudio, osc, gain };
+    return penSound;
+  }
+
+  function updatePenSound(speed) {
+    const sound = ensurePenSound();
+    if (!sound) return;
+    const now = sound.ctx.currentTime;
+    const targetGain = Math.min(0.18, (speed / MAX_SPEED) * 0.18);
+    const targetFreq = 360 + speed * 0.5;
+    sound.gain.gain.cancelScheduledValues(now);
+    sound.gain.gain.linearRampToValueAtTime(targetGain, now + 0.1);
+    sound.osc.frequency.setTargetAtTime(targetFreq, now, 0.08);
+  }
+
+  function stopPenSound() {
+    if (!penSound) return;
+    const now = penSound.ctx.currentTime;
+    penSound.gain.gain.cancelScheduledValues(now);
+    penSound.gain.gain.linearRampToValueAtTime(0, now + 0.12);
+  }
 
   // --- Pfaddefinition (krickelig, 2D) ---
 
@@ -540,6 +580,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       vy *= scale;
     }
 
+    updatePenSound(speed);
+
     penX += vx * dt;
     penY += vy * dt;
 
@@ -619,6 +661,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     isFinished = true;
     isRunning = false;
     isCountingDown = false;
+    stopPenSound();
 
     if (animationFrameId) {
       window.cancelAnimationFrame(animationFrameId);
@@ -675,6 +718,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     vx = 0;
     vy = 0;
     cameraX = 0;
+    stopPenSound();
     trailPoints.length = 0;
     updateTime(0);
     updateAccuracyDisplay();
@@ -733,6 +777,13 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       if (animationFrameId) {
         window.cancelAnimationFrame(animationFrameId);
       }
+      stopPenSound();
+      if (penSound && penSound.osc) {
+        try {
+          penSound.osc.stop();
+        } catch (e) {}
+      }
+      penSound = null;
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("resize", resizeCanvas);

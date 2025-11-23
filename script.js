@@ -33,6 +33,43 @@ let backgroundMusic = null;
 let tearEffectSound = null;
 let backgroundMusicPlaybackGuard = null;
 
+window.AdventAudio = window.AdventAudio || {};
+
+window.AdventAudio.getContext = function getContext() {
+  if (window.__adventAudioContext) return window.__adventAudioContext;
+  try {
+    window.__adventAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) {
+    console.warn("Konnte keinen AudioContext erstellen:", e);
+    window.__adventAudioContext = null;
+  }
+  return window.__adventAudioContext;
+};
+
+window.AdventAudio.playWinJingle = function playWinJingle() {
+  const ctx = window.AdventAudio.getContext();
+  if (!ctx) return;
+  ctx.resume?.();
+
+  const now = ctx.currentTime;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+
+  const bell = ctx.createOscillator();
+  bell.type = "triangle";
+
+  const notes = [659.25, 783.99, 987.77, 1318.51];
+  notes.forEach((freq, index) => {
+    bell.frequency.setValueAtTime(freq, now + index * 0.25);
+  });
+
+  bell.connect(gain).connect(ctx.destination);
+  bell.start(now);
+  bell.stop(now + 1.8);
+};
+
 function setupBackgroundMusic() {
   try {
     backgroundMusic = new Audio("assets/audio/driving_home_for_christmas.mp3");
@@ -886,6 +923,10 @@ function handleGameWin(day) {
   if (!completedDays.includes(day)) {
     completedDays.push(day);
     saveCompletedDays(completedDays);
+  }
+
+  if (window.AdventAudio && typeof window.AdventAudio.playWinJingle === "function") {
+    window.AdventAudio.playWinJingle();
   }
 
   const door = document.querySelector(`.door[data-day="${day}"]`);

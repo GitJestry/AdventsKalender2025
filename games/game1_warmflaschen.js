@@ -13,6 +13,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   let hasWon = false;
   let isAnimating = false;
 
+  const audioApi = window.AdventAudio || {};
+
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
@@ -91,6 +93,38 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  }
+
+  function playPourSound() {
+    if (!audioApi.getContext) return;
+    const ctx = audioApi.getContext();
+    if (!ctx) return;
+    ctx.resume?.();
+
+    const duration = 0.35;
+    const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.22;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 650;
+    filter.Q.value = 4;
+
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    source.connect(filter).connect(gain).connect(ctx.destination);
+    source.start(now);
+    source.stop(now + duration + 0.05);
   }
 
   function resetGame() {
@@ -200,6 +234,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     setTimeout(() => {
       const moved = doPour(fromIndex, toIndex);
       if (moved > 0) {
+        playPourSound();
         moveCount++;
         updateMoves();
         const won = checkWin();

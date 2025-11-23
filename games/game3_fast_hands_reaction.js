@@ -22,6 +22,8 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   let hasPressedThisRound = false;
   let destroyed = false;
 
+  const audioApi = window.AdventAudio || {};
+
   container.innerHTML = "";
 
   const root = document.createElement("div");
@@ -160,6 +162,28 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     blob.classList.add("visible");
   }
 
+  function playBlobSound() {
+    if (!audioApi.getContext) return;
+    const ctx = audioApi.getContext();
+    if (!ctx) return;
+    ctx.resume?.();
+
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.16);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
   function clearTimers() {
     if (nextSignalTimeoutId != null) {
       window.clearTimeout(nextSignalTimeoutId);
@@ -193,6 +217,7 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       state = "signal";
       signalStartTime = performance.now();
       showBlob();
+      playBlobSound();
       setStatus("JETZT! ✨ So schnell wie möglich die Leertaste drücken!");
       tooLateTimeoutId = window.setTimeout(() => {
         if (destroyed || state !== "signal" || hasPressedThisRound) return;
