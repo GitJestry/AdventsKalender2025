@@ -4,8 +4,8 @@ const MAI_GAME_DURATION = 30; // Sekunden für eine Runde
 const MAI_TARGET_SCORE = 20; // Zielpunktzahl zum Gewinnen
 const MAI_GOLDEN_BONUS = 3; // Punkte für goldene Maiswaffeln
 const MAI_MISS_TIME_PENALTY = 0.7; // Sekunden, die bei einem Fehlschuss verloren gehen
-const MAI_BASE_SPEED = 120; // Basisspeed in px/s
-const MAI_CROSSHAIR_SIZE = 63; // px – 30% kleiner als bisher
+const MAI_BASE_SPEED = 110; // Basisspeed in px/s
+const MAI_CROSSHAIR_SIZE = 70; // px – präsenteres Fadenkreuz
 
 window.AdventGames = window.AdventGames || {};
 
@@ -22,6 +22,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   let score = 0;
   let highscore = Number(window.localStorage.getItem(highscoreKey)) || 0;
   let speedMultiplier = 1;
+  let spawnCooldown = 0.4;
   let snowDots = [];
 
   const wafels = [];
@@ -45,14 +46,6 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     <div class="maiwaffel-hint">Triff die fliegenden Maiswaffeln, Fehlschüsse kosten Zeit! Goldene bringen Extra-Punkte.</div>
   `;
 
-  const controls = document.createElement("div");
-  controls.className = "maiwaffel-controls";
-  const startButton = document.createElement("button");
-  startButton.className = "maiwaffel-button maiwaffel-start";
-  startButton.textContent = "Spiel starten";
-  controls.appendChild(startButton);
-  header.appendChild(controls);
-
   const canvasWrap = document.createElement("div");
   canvasWrap.className = "maiwaffel-canvas-wrap";
 
@@ -65,6 +58,20 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   crosshair.className = "maiwaffel-crosshair";
   crosshair.innerHTML = '<span class="maiwaffel-crosshair-dot"></span>';
   canvasWrap.appendChild(crosshair);
+
+  const introOverlay = document.createElement("div");
+  introOverlay.className = "maiwaffel-overlay maiwaffel-start-overlay";
+  introOverlay.innerHTML = `
+    <div class="maiwaffel-overlay-box">
+      <div class="maiwaffel-overlay-title">Bist du bereit für Mais-Duck-Hunt?</div>
+      <div class="maiwaffel-overlay-sub">Schieße die fliegenden Maiswaffeln ab – Fehlschüsse kosten Zeit.</div>
+    </div>
+  `;
+  const startButton = document.createElement("button");
+  startButton.className = "maiwaffel-button maiwaffel-start";
+  startButton.textContent = "Spiel starten";
+  introOverlay.appendChild(startButton);
+  canvasWrap.appendChild(introOverlay);
 
   const result = document.createElement("div");
   result.className = "maiwaffel-result hidden";
@@ -87,15 +94,15 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     const style = document.createElement("style");
     style.id = "maiwaffel-styles";
     style.textContent = `
-      .maiwaffel-container-active { cursor: none; }
+      .maiwaffel-container-active.running { cursor: none; }
       .maiwaffel-game { position: relative; background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1), transparent 40%), linear-gradient(180deg, #17355c 0%, #0c1c33 45%, #0a162b 100%); border-radius: 18px; padding: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); color: #f5f7ff; font-family: "Nunito", "Inter", system-ui, -apple-system, sans-serif; }
       .maiwaffel-header { margin-bottom: 10px; }
       .maiwaffel-title { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 6px; }
       .maiwaffel-stats { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.95rem; align-items: center; }
       .maiwaffel-stats span { background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
       .maiwaffel-hint { margin-top: 8px; font-size: 0.9rem; color: #d8e6ff; }
-      .maiwaffel-controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-      .maiwaffel-canvas-wrap { position: relative; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(180deg, #0c2138 0%, #0a1a2e 60%, #081322 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.45); }
+      .maiwaffel-controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+      .maiwaffel-canvas-wrap { position: relative; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(180deg, #0c2138 0%, #0a1a2e 60%, #081322 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.45); min-height: 420px; }
       .maiwaffel-canvas { display: block; width: 100%; height: 420px; }
       .maiwaffel-miss { animation: maiwaffel-miss 0.15s ease-in-out; }
       .maiwaffel-crosshair { position: absolute; width: ${MAI_CROSSHAIR_SIZE}px; height: ${MAI_CROSSHAIR_SIZE}px; border: 2px solid rgba(255,255,255,0.9); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 0 18px rgba(0,255,255,0.25); mix-blend-mode: screen; }
@@ -103,12 +110,17 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       .maiwaffel-crosshair::before { width: 2px; height: ${MAI_CROSSHAIR_SIZE}px; left: 50%; top: 0; transform: translateX(-50%); }
       .maiwaffel-crosshair::after { height: 2px; width: ${MAI_CROSSHAIR_SIZE}px; top: 50%; left: 0; transform: translateY(-50%); }
       .maiwaffel-crosshair-dot { position: absolute; width: 7px; height: 7px; background: #ffefd0; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px rgba(255, 230, 180, 0.8); }
-      .maiwaffel-result { position: absolute; inset: 0; background: rgba(0, 7, 20, 0.72); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+      .maiwaffel-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,19,37,0.85), rgba(5,12,24,0.9)); display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; backdrop-filter: blur(4px); text-align: center; padding: 20px; }
+      .maiwaffel-overlay.hidden { display: none; }
+      .maiwaffel-overlay-box { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12)); padding: 18px 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 36px rgba(0,0,0,0.35); max-width: 440px; }
+      .maiwaffel-overlay-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; letter-spacing: 0.3px; }
+      .maiwaffel-overlay-sub { color: #d6e7ff; font-size: 0.95rem; }
+      .maiwaffel-result { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 7, 20, 0.76), rgba(0,10,24,0.85)); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
       .maiwaffel-result.hidden { display: none; }
-      .maiwaffel-result-box { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12)); padding: 20px 24px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center; color: #f2f6ff; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 420px; }
+      .maiwaffel-result-box { background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.16)); padding: 22px 26px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.16); text-align: center; color: #f2f6ff; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 420px; }
       .maiwaffel-result-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.3px; }
       .maiwaffel-result-body { margin-bottom: 16px; line-height: 1.5; }
-      .maiwaffel-button { background: linear-gradient(120deg, #ffb347, #ff8c42); border: none; color: #1a0e05; padding: 10px 18px; font-weight: 800; border-radius: 12px; box-shadow: 0 5px 14px rgba(255,140,66,0.4); cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; }
+      .maiwaffel-button { background: linear-gradient(120deg, #ffb347, #ff8c42); border: none; color: #1a0e05; padding: 12px 22px; font-weight: 800; border-radius: 12px; box-shadow: 0 5px 14px rgba(255,140,66,0.4); cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; font-size: 1rem; }
       .maiwaffel-button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(255,140,66,0.45); }
       .maiwaffel-button:active { transform: translateY(1px); }
       @keyframes maiwaffel-miss { 0% { transform: translateX(0); box-shadow: inset 0 0 30px rgba(255,0,76,0.35); } 50% { transform: translateX(6px); box-shadow: inset 0 0 40px rgba(255,0,76,0.5); } 100% { transform: translateX(0); box-shadow: inset 0 0 30px rgba(255,0,76,0.35); } }
@@ -203,8 +215,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
   }
 
   function spawnInitial() {
-    for (let i = 0; i < 4; i++) {
-      spawnWafel(i === 3);
+    for (let i = 0; i < 2; i++) {
+      spawnWafel(false);
     }
   }
 
@@ -212,7 +224,9 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     const w = canvas.width / window.devicePixelRatio;
     const h = canvas.height / window.devicePixelRatio;
 
-    speedMultiplier += dt * 0.03;
+    speedMultiplier += dt * 0.025;
+
+    spawnCooldown -= dt;
 
     wafels.forEach((wafel) => {
       wafel.x += wafel.vx * dt;
@@ -231,8 +245,9 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       }
     }
 
-    if (wafels.length < 5) {
+    if (spawnCooldown <= 0 && wafels.length < 3) {
       spawnWafel();
+      spawnCooldown = 0.55 + Math.random() * 0.35;
     }
 
     for (let i = crumbs.length - 1; i >= 0; i--) {
@@ -375,7 +390,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       const wafel = wafels[i];
       const dx = wafel.x - x;
       const dy = wafel.y - y;
-      if (Math.hypot(dx, dy) <= crosshairRadius) {
+      if (Math.hypot(dx, dy) <= crosshairRadius + wafel.radius * 0.65) {
         hitIndex = i;
         break;
       }
@@ -407,6 +422,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     resetState();
     isRunning = true;
     lastTimestamp = null;
+    container.classList.add("running");
+    introOverlay.classList.add("hidden");
     crosshair.classList.remove("hidden");
     setStartButtonState("Runde läuft...", true);
     animationFrame = window.requestAnimationFrame(loop);
@@ -425,6 +442,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     timeLeft = MAI_GAME_DURATION;
     score = 0;
     speedMultiplier = 1;
+    spawnCooldown = 0.4;
+    container.classList.remove("running");
     drawBackground();
     if (spawnTargets) {
       spawnInitial();
@@ -441,6 +460,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     animationFrame = null;
     countdownInterval = null;
     crosshair.classList.add("hidden");
+    container.classList.remove("running");
     setStartButtonState("Erneut spielen", false);
 
     if (score > highscore) {
@@ -459,6 +479,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
     }
 
     result.classList.remove("hidden");
+    introOverlay.classList.remove("hidden");
     if (won) onWin();
   }
 
@@ -492,7 +513,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
       window.removeEventListener("resize", resizeCanvas);
       canvas.removeEventListener("pointermove", moveCrosshair);
       canvas.removeEventListener("click", handleShot);
-      container.classList.remove("maiwaffel-container-active");
+      container.classList.remove("maiwaffel-container-active", "running");
     }
   };
 };
