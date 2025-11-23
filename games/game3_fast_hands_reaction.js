@@ -13,7 +13,28 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   const MAX_WAIT_MS = 7000;
   const TOO_LATE_MS = 1200;
 
-  let state = "idle"; // "idle" | "waiting" | "signal" | "result" | "won"
+  let state = "idle"; // "idle" | "waiting" | "signal" | "too-late" | "won";
+
+  let splatSound = null;
+  try {
+    splatSound = new Audio("assets/audio/splat_sound.wav");
+    splatSound.volume = 0.4;
+  } catch (e) {
+    console.warn("Konnte Klecks-Sound nicht laden", e);
+  }
+
+  function playSplatSound() {
+    if (!splatSound) return;
+    try {
+      const s = splatSound.cloneNode(true);
+      s.volume = splatSound.volume;
+      s.play().catch(() => {});
+    } catch (e) {
+      console.warn("Konnte Klecks-Sound nicht abspielen", e);
+    }
+  }
+
+"signal" | "result" | "won"
   let streak = 0;
   let bestReaction = null;
   let signalStartTime = null;
@@ -158,6 +179,7 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
   function showBlob() {
     blob.classList.add("visible");
+    playSplatSound();
   }
 
   function clearTimers() {

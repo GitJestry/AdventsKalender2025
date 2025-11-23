@@ -13,6 +13,26 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   let hasWon = false;
   let isAnimating = false;
 
+  let waterFillSound = null;
+  try {
+    waterFillSound = new Audio("assets/audio/water_fill_sound.wav");
+    waterFillSound.volume = 0.25;
+  } catch (e) {
+    console.warn("Konnte Wasserfüll-Sound nicht laden", e);
+  }
+
+  function playWaterFillSound() {
+    if (!waterFillSound) return;
+    try {
+      const s = waterFillSound.cloneNode(true);
+      s.volume = waterFillSound.volume;
+      s.play().catch(() => {});
+    } catch (e) {
+      console.warn("Konnte Wasserfüll-Sound nicht abspielen", e);
+    }
+  }
+
+
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
@@ -189,6 +209,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
   function animatePour(fromIndex, toIndex) {
     isAnimating = true;
+
+    playWaterFillSound();
 
     const flasks = grid.querySelectorAll(".flask");
     const fromEl = flasks[fromIndex];

@@ -31,13 +31,14 @@ let doorPullProgress = getDoorPullProgress();
 
 let backgroundMusic = null;
 let tearEffectSound = null;
+let victorySound = null;
 let backgroundMusicPlaybackGuard = null;
 
 function setupBackgroundMusic() {
   try {
     backgroundMusic = new Audio("assets/audio/driving_home_for_christmas.mp3");
     backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.10; // noch leiser (~20% weniger)
+    backgroundMusic.volume = 0.05; // deutlich leiser
     backgroundMusic.autoplay = true;
     backgroundMusic.preload = "auto";
 
@@ -62,10 +63,31 @@ function setupBackgroundMusic() {
   }
 }
 
+
+function setupVictorySound() {
+  try {
+    victorySound = new Audio("assets/audio/victory_sound.wav");
+    victorySound.volume = 0.2;
+    victorySound.preload = "auto";
+  } catch (e) {
+    console.error("Fehler beim Initialisieren des Victory-Sounds", e);
+  }
+}
+
+function playVictorySound() {
+  if (!victorySound) return;
+  try {
+    victorySound.currentTime = 0;
+    victorySound.play().catch(() => {});
+  } catch (e) {
+    console.warn("Konnte Victory-Sound nicht abspielen", e);
+  }
+}
+
 function setupDoorSounds() {
   try {
     tearEffectSound = new Audio("assets/audio/tear_effect_paper.wav");
-    tearEffectSound.volume = 0.9; // ca. 20% lauter
+    tearEffectSound.volume = 0.92; // ca. 20% lauter
   } catch (e) {
     console.error("Fehler beim Laden des Reiß-Sounds", e);
   }
@@ -290,6 +312,7 @@ function ensureGameAssetsLoaded(entry, onReady, onError) {
 document.addEventListener("DOMContentLoaded", () => {
   setupDoorSounds();
   setupBackgroundMusic();
+  setupVictorySound();
   initSnow();
   initHeader();
   initCalendar();
@@ -376,25 +399,24 @@ function initCalendar() {
         door.classList.add("available");
       }
 
-      door.innerHTML = `
-        <div class="door-inner">
-          <div class="door-frame">
-            <div class="door-star-dust"></div>
-            <div class="door-panel">
-              <span class="door-number">${entry.day}</span>
-              <span class="door-knob"></span>
-            </div>
-            <div class="door-hinge" aria-hidden="true"></div>
-            <div class="door-pull-tab" aria-hidden="true">
-              <span class="door-pull-arrow">⇠</span>
-              <span class="door-pull-text">aufziehen</span>
-            </div>
-            <div class="door-status">
-              <div class="door-status-icon" aria-hidden="true">✓</div>
+        door.innerHTML = `
+          <div class="door-inner">
+            <div class="door-frame">
+              <div class="door-star-dust"></div>
+              <div class="door-panel">
+                <span class="door-number">${entry.day}</span>
+                <span class="door-knob"></span>
+                <div class="door-pull-tab" aria-hidden="true">
+                  <span class="door-pull-arrow">⇠</span>
+                </div>
+              </div>
+              <div class="door-hinge" aria-hidden="true"></div>
+              <div class="door-status">
+                <div class="door-status-icon" aria-hidden="true">✓</div>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
 
       const starLayer = door.querySelector(".door-star-dust");
       createDoorStarfield(starLayer);
@@ -464,7 +486,8 @@ function triggerDoorNowOpenEffect(door) {
 function setupDoorPullInteraction(door, dayInt) {
   const panel = door.querySelector(".door-panel");
   const knob = door.querySelector(".door-knob");
-  if (!panel || !knob) return;
+  const pullTab = door.querySelector(".door-pull-tab");
+  if (!panel || !knob || !pullTab) return;
 
   const key = String(dayInt);
 
@@ -514,8 +537,18 @@ function setupDoorPullInteraction(door, dayInt) {
   }
 
   const onPointerDown = (event) => {
+    const target = event.target;
+    if (!pullTab || !target || !pullTab.contains(target)) return;
+
     if (!isDayAvailable(dayInt)) return;
     if (door.classList.contains("open") || door.classList.contains("completed")) return;
+
+    if (typeof event.preventDefault === "function") {
+      event.preventDefault();
+    }
+    if (typeof event.stopPropagation === "function") {
+      event.stopPropagation();
+    }
 
     const ex = event.clientX || 0;
 
@@ -882,6 +915,7 @@ function openGameForEntry(entry) {
 
 
 function handleGameWin(day) {
+  playVictorySound();
   const completedDays = getCompletedDays();
   if (!completedDays.includes(day)) {
     completedDays.push(day);

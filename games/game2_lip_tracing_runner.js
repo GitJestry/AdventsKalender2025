@@ -67,6 +67,36 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   let animationFrameId = null;
 
+  let drawSound = null;
+  try {
+    drawSound = new Audio("assets/audio/draw_sound.wav");
+    drawSound.loop = true;
+    drawSound.volume = 1.8;
+  } catch (e) {
+    console.warn("Konnte Zeichnen-Sound nicht laden", e);
+  }
+
+  function playDrawSound() {
+    if (!drawSound) return;
+    try {
+      drawSound.currentTime = 0;
+      drawSound.play().catch(() => {});
+    } catch (e) {
+      console.warn("Konnte Zeichnen-Sound nicht abspielen", e);
+    }
+  }
+
+  function stopDrawSound() {
+    if (!drawSound) return;
+    try {
+      drawSound.pause();
+      drawSound.currentTime = 0;
+    } catch (e) {
+      console.warn("Konnte Zeichnen-Sound nicht stoppen", e);
+    }
+  }
+
+
   container.innerHTML = "";
 
   const root = document.createElement("div");
@@ -394,6 +424,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   function drawPen() {
     ctx.save();
 
+    // Glow direkt an der Stiftspitze (dort, wo wirklich gezeichnet wird)
     ctx.beginPath();
     ctx.arc(penX, penY, BRUSH_RADIUS + 4, 0, Math.PI * 2);
     const glowGrad = ctx.createRadialGradient(penX, penY, 0, penX, penY, BRUSH_RADIUS + 4);
@@ -402,9 +433,20 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = glowGrad;
     ctx.fill();
 
-    ctx.translate(penX, penY);
-    ctx.rotate(-Math.PI / 12);
+    // Stiftkörper so verschieben, dass die Spitze exakt auf penX/penY liegt
+    const angle = -Math.PI / 12;
+    const nibOffset = 26; // Abstand von Stiftmitte zur Spitze in den lokalen Koordinaten
 
+    // Weltkoordinaten des Stiftkörpers berechnen, so dass die Spitze bei (penX, penY) sitzt
+    const offsetX = Math.cos(angle) * nibOffset;
+    const offsetY = Math.sin(angle) * nibOffset;
+    const bodyCenterX = penX + offsetX;
+    const bodyCenterY = penY + offsetY;
+
+    ctx.translate(bodyCenterX, bodyCenterY);
+    ctx.rotate(angle);
+
+    // Stiftkörper
     ctx.beginPath();
     if (ctx.roundRect) {
       ctx.roundRect(-18, -6, 36, 12, 6);
@@ -418,6 +460,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = bodyGrad;
     ctx.fill();
 
+    // Kappe
     ctx.beginPath();
     if (ctx.roundRect) {
       ctx.roundRect(10, -7, 10, 14, 4);
@@ -427,6 +470,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = "#fefefe";
     ctx.fill();
 
+    // Spitze
     ctx.beginPath();
     ctx.moveTo(-18, -4);
     ctx.lineTo(-26, 0);
@@ -594,6 +638,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   function startRunInternal(timestamp) {
     isRunning = true;
+    playDrawSound();
     isFinished = false;
     startTimeMs = timestamp;
     lastFrameMs = timestamp;
@@ -619,6 +664,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     isFinished = true;
     isRunning = false;
     isCountingDown = false;
+
+    stopDrawSound();
 
     if (animationFrameId) {
       window.cancelAnimationFrame(animationFrameId);
@@ -663,6 +710,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       window.cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
+    stopDrawSound();
     isRunning = false;
     isFinished = false;
     isCountingDown = false;
@@ -733,6 +781,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       if (animationFrameId) {
         window.cancelAnimationFrame(animationFrameId);
       }
+      stopDrawSound();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("resize", resizeCanvas);
