@@ -35,6 +35,11 @@ const ADVENT_CONFIG = {
       id: "maiswaffel_shooting",
       script: "games/game5_maiswaffel_shooting.js",
       style: null
+    },
+    capybara_sprint: {
+      id: "capybara_sprint",
+      script: "games/game6_capybara_sprint.js",
+      style: null
     }
   },
 
@@ -84,6 +89,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "maiswaffel_shooting"
+    },
+    {
+      day: 6,
+      title: "Nikolaus-Capybara-Sprint",
+      giftLabel: "Im echten Kalender: weihnachtliche Überraschung",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "capybara_sprint"
     }
   ]
 };
