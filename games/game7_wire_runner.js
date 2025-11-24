@@ -8,18 +8,21 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
   const GAME_DISTANCE = 7000; // Meter bis zum Ziel
-  const TARGET_TIME = 60; // Sekunden, ca. 1 Minute
+  const TARGET_TIME = 65; // Sekunden, etwas entspannter
   const BASE_SPEED = GAME_DISTANCE / TARGET_TIME; // m/s
   const GRAVITY = 2600;
   const JUMP_FORCE = 1050;
+  const COYOTE_TIME = 0.12;
+  const JUMP_BUFFER = 0.14;
   const DUCK_HEIGHT = 38;
   const STAND_HEIGHT = 68;
   const PLAYER_WIDTH = 54;
 
   let canvas, ctx;
-  let width = 760;
-  let height = 320;
+  let width = 840;
+  let height = 520;
   let dpr = window.devicePixelRatio || 1;
+  let groundY = height - 90;
 
   let lastTime = null;
   let distance = 0;
@@ -44,10 +47,14 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     isDucking: false,
   };
 
-  const groundY = height - 68;
   const obstacles = [];
-  let spawnTimer = 0;
-  let spawnInterval = 1.2;
+  let spawnTimer = 1.2;
+  let spawnInterval = 1.25;
+
+  let runPhase = 0;
+  let coyoteTimer = 0;
+  let jumpBufferTimer = 0;
+  let goOverlayTimeout = null;
 
   const snow = Array.from({ length: 60 }, () => ({
     x: Math.random(),
@@ -65,10 +72,7 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
   header.className = "wire-runner__header";
   header.innerHTML = `
     <div class="wire-runner__title">Tür 7 – Golden Wire Runner</div>
-    <div class="wire-runner__subtitle">
-      Schaffst du 7000 Meter in winterlicher Dunkelheit? Weiche den rollenden, goldenen Draht-Kugeln aus
-      und halte durch, bis der Zielelch auftaucht.
-    </div>
+    <div class="wire-runner__subtitle">Kurzer Text, klare Aufgabe: 7000 m schaffen, Hindernissen ausweichen.</div>
   `;
 
   const controls = document.createElement("div");
@@ -86,7 +90,7 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
 
   const statusLabel = document.createElement("div");
   statusLabel.className = "wire-runner__status";
-  statusLabel.textContent = "Drücke Start, dann SPACE/↑ zum Springen, ↓ zum Ducken.";
+  statusLabel.textContent = "Start drücken oder Space/↑ tippen. Hindernissen ausweichen.";
 
   controls.appendChild(startBtn);
   controls.appendChild(restartBtn);
@@ -103,19 +107,6 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
   const layout = document.createElement("div");
   layout.className = "wire-runner__layout";
 
-  const help = document.createElement("aside");
-  help.className = "wire-runner__help";
-  help.innerHTML = `
-    <p class="wire-runner__help-title">Steuerung</p>
-    <ul>
-      <li><strong>Start-Button</strong> → Countdown 3, 2, 1, Go!</li>
-      <li><strong>SPACE / Pfeil ↑</strong> → Springen (dynamischer Schwung)</li>
-      <li><strong>Pfeil ↓</strong> → Ducken (Block wird flach)</li>
-      <li>Weiche den goldenen Draht-Kugeln aus – manche fliegen knapp über dem Boden.</li>
-      <li>Ziel: <strong>7000 m</strong> in ca. einer Minute schaffen.</li>
-    </ul>
-  `;
-
   const canvasWrapper = document.createElement("div");
   canvasWrapper.className = "wire-runner__canvas-wrapper";
 
@@ -129,7 +120,6 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
   canvasWrapper.appendChild(overlay);
 
   layout.appendChild(canvasWrapper);
-  layout.appendChild(help);
 
   root.appendChild(header);
   root.appendChild(controls);
@@ -142,9 +132,10 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
 
   function resize() {
     const bounds = canvasWrapper.getBoundingClientRect();
-    width = Math.min(900, Math.max(620, bounds.width));
-    height = 320;
+    width = Math.min(980, Math.max(700, bounds.width));
+    height = 520;
     dpr = window.devicePixelRatio || 1;
+    groundY = height - 90;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     canvas.style.width = `${width}px`;
@@ -160,20 +151,33 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     player.height = STAND_HEIGHT;
   }
 
+  function onGround() {
+    return player.y + player.height >= groundY - 0.5;
+  }
+
   function resetGame() {
+    if (goOverlayTimeout) {
+      clearTimeout(goOverlayTimeout);
+      goOverlayTimeout = null;
+    }
+
     distance = 0;
     elapsed = 0;
     speed = BASE_SPEED;
-    spawnTimer = 0;
-    spawnInterval = 1.1;
+    spawnTimer = 1.2;
+    spawnInterval = 1.25;
     obstacles.length = 0;
     isPlaying = false;
     isWin = false;
     isOver = false;
     isCountingDown = false;
+    lastTime = null;
+    runPhase = 0;
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
     overlay.textContent = "Bereit?";
     overlay.classList.add("wire-runner__overlay--show");
-    statusLabel.textContent = "Drücke Start, dann SPACE/↑ zum Springen, ↓ zum Ducken.";
+    statusLabel.textContent = "Start drücken oder Space/↑ tippen. Hindernissen ausweichen.";
     resetPlayer();
   }
 
@@ -192,18 +196,18 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     isOver = false;
     isWin = false;
     overlay.classList.remove("wire-runner__overlay--show");
-    statusLabel.textContent = "Lauf! Halte durch bis 7000 m.";
+    statusLabel.textContent = "Lauf! Strecke freihalten.";
   }
 
   function spawnObstacle() {
-    const size = 24 + Math.random() * 38; // variable Größen
-    const isFlying = Math.random() < 0.32; // ein Teil schwebt
+    const size = 24 + Math.random() * 34; // variable Größen
+    const isFlying = Math.random() < 0.3; // ein Teil schwebt
     const yPos = isFlying
       ? groundY - size - (34 + Math.random() * 60)
       : groundY - size + 8;
 
     obstacles.push({
-      x: width + size + Math.random() * 60,
+      x: width + size + 120 + Math.random() * 120,
       y: yPos,
       size,
       rotation: Math.random() * Math.PI * 2,
@@ -215,14 +219,14 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     spawnTimer -= delta;
     if (spawnTimer <= 0) {
       spawnObstacle();
-      const difficultyBoost = Math.min(0.38, distance / GAME_DISTANCE * 0.3);
-      spawnInterval = 0.95 - difficultyBoost + Math.random() * 0.18;
+      const difficultyBoost = Math.min(0.26, (distance / GAME_DISTANCE) * 0.22);
+      spawnInterval = 1.05 - difficultyBoost + Math.random() * 0.22;
       spawnTimer = spawnInterval;
     }
 
     for (let i = obstacles.length - 1; i >= 0; i -= 1) {
       const obs = obstacles[i];
-      obs.x -= (speed * 3.1) * delta; // Bildgeschwindigkeit
+      obs.x -= (speed * 2.35) * delta; // Bildgeschwindigkeit
       obs.rotation += obs.angularVel * delta;
       if (obs.x + obs.size < -40) {
         obstacles.splice(i, 1);
@@ -260,9 +264,16 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
   }
 
   function updatePlayer(delta) {
-    const onGround = player.y + player.height >= groundY;
+    const grounded = onGround();
 
-    if (keys.ArrowDown && onGround) {
+    if (grounded) {
+      coyoteTimer = COYOTE_TIME;
+      player.vy = Math.max(player.vy, 0);
+    } else {
+      coyoteTimer = Math.max(0, coyoteTimer - delta);
+    }
+
+    if (keys.ArrowDown && grounded) {
       if (!player.isDucking) {
         player.isDucking = true;
         const feet = player.y + player.height;
@@ -277,9 +288,23 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     }
 
     const wantsJump = keys.Space || keys.ArrowUp;
-    if (wantsJump && onGround && !player.isDucking) {
+    if (wantsJump) {
+      jumpBufferTimer = JUMP_BUFFER;
+    } else {
+      jumpBufferTimer = Math.max(0, jumpBufferTimer - delta);
+    }
+
+    if (jumpBufferTimer > 0 && (grounded || coyoteTimer > 0)) {
+      if (player.isDucking) {
+        const feet = player.y + player.height;
+        player.isDucking = false;
+        player.height = STAND_HEIGHT;
+        player.y = feet - player.height;
+      }
       player.vy = -JUMP_FORCE;
-      statusLabel.textContent = "Schwungvoll!";
+      jumpBufferTimer = 0;
+      coyoteTimer = 0;
+      statusLabel.textContent = "Sprung!";
     }
 
     player.vy += GRAVITY * delta;
@@ -364,6 +389,22 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     ctx.fillStyle = "#ffdd78";
     ctx.fillRect(w - 28, h - 14, 16, 8);
 
+    // Beine / Bewegung
+    ctx.strokeStyle = "#1a2f4a";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    const stride = Math.sin(runPhase) * 10;
+    const lift = Math.max(0, Math.sin(runPhase + Math.PI / 2) * 8);
+    ctx.beginPath();
+    ctx.moveTo(10 + stride, h - 6);
+    ctx.lineTo(10 + stride, h + 14 + lift);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(w - 14 - stride, h - 6);
+    ctx.lineTo(w - 14 - stride, h + 12 + Math.max(0, -lift));
+    ctx.stroke();
+
     ctx.restore();
   }
 
@@ -420,7 +461,10 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
       const remaining = COUNTDOWN_DURATION - elapsedCountdown;
       if (remaining <= 0) {
         overlay.textContent = "GO!";
-        setTimeout(() => overlay.classList.remove("wire-runner__overlay--show"), 280);
+        goOverlayTimeout = setTimeout(() => {
+          overlay.classList.remove("wire-runner__overlay--show");
+          goOverlayTimeout = null;
+        }, 320);
         startRun();
       } else {
         overlay.textContent = Math.ceil(remaining).toString();
@@ -433,6 +477,8 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
     elapsed += delta;
     speed = BASE_SPEED * (1 + Math.min(0.22, distance / GAME_DISTANCE * 0.25));
     distance += speed * delta;
+    runPhase += delta * (onGround() ? 10 + speed * 0.03 : 6);
+    if (runPhase > Math.PI * 2) runPhase -= Math.PI * 2;
 
     updatePlayer(delta);
     updateObstacles(delta);
