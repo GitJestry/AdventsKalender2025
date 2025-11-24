@@ -459,7 +459,7 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
 
     if (winner.isPlayer) {
       try {
-        onWin();
+        onWin({ level: "brown", label: "Brauner Stern" });
       } catch (e) {
         console.error("onWin callback error", e);
       }

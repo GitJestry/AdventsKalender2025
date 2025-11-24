@@ -410,7 +410,7 @@ window.AdventGames["wire_runner_7"] = function initWireRunner(container, options
       overlay.textContent = "GESCHAFFT!";
       overlay.classList.add("wire-runner__overlay--show");
       statusLabel.textContent = "Du hast 7000 m erreicht – Geschenk frei!";
-      onWin();
+      onWin({ level: "brown", label: "Brauner Stern" });
     }
   }
 

@@ -55,7 +55,6 @@
         <div class="game-title-block">
           <h2 id="gameTitle"></h2>
           <p id="gameGift" class="game-gift"></p>
-          <div id="gameWinPersistent" class="game-win-persistent hidden" aria-live="polite"></div>
         </div>
       </div>
 
@@ -63,6 +62,13 @@
         <section class="game-area">
           <h3>Spiel</h3>
           <div class="game-area-inner">
+            <div id="gameStarBadge" class="game-star-badge hidden" aria-live="polite">
+              <span class="game-star-icon" aria-hidden="true">★</span>
+              <div class="game-star-text">
+                <span class="game-star-label"></span>
+                <span class="game-star-hint">Stern freigeschaltet</span>
+              </div>
+            </div>
             <div id="gameContainer" class="game-container">
               <!-- Spiel wird dynamisch geladen -->
             </div>

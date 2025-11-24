@@ -12,6 +12,14 @@
   --accent-soft: #ffe9c4;
   --text-main: #fffaf3;
   --text-muted: #d7ddd2;
+  --star-brown: #c58b5b;
+  --star-brown-dark: #9c6235;
+  --star-silver: #dfe6ef;
+  --star-silver-dark: #a8b3c2;
+  --star-gold: #f7d35c;
+  --star-gold-dark: #c59a2a;
+  --star-red: #ff7f7f;
+  --star-red-dark: #d45555;
   --border-soft: rgba(255, 255, 255, 0.2);
   --door-locked: rgba(255, 255, 255, 0.08);
   --door-open: rgba(0, 0, 0, 0.2);
@@ -1466,6 +1474,108 @@ main {
   position: relative;
 }
 
+.game-star-badge {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.8rem 0.45rem 0.65rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  z-index: 3;
+}
+
+.game-star-badge.hidden {
+  display: none;
+}
+
+.game-star-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.game-star-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.2;
+}
+
+.game-star-label {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.game-star-hint {
+  font-size: 0.75rem;
+  color: var(--accent-soft);
+  opacity: 0.9;
+}
+
+.game-star-badge.star-level-brown {
+  background: linear-gradient(135deg, rgba(197, 139, 91, 0.2), rgba(156, 98, 53, 0.35));
+  border-color: rgba(197, 139, 91, 0.5);
+}
+
+.game-star-badge.star-level-brown .game-star-icon {
+  background: linear-gradient(135deg, var(--star-brown), var(--star-brown-dark));
+  color: #1c0d06;
+}
+
+.game-star-badge.star-level-silver {
+  background: linear-gradient(135deg, rgba(223, 230, 239, 0.25), rgba(168, 179, 194, 0.35));
+  border-color: rgba(223, 230, 239, 0.5);
+}
+
+.game-star-badge.star-level-silver .game-star-icon {
+  background: linear-gradient(135deg, var(--star-silver), var(--star-silver-dark));
+  color: #2f3640;
+}
+
+.game-star-badge.star-level-gold {
+  background: linear-gradient(135deg, rgba(247, 211, 92, 0.3), rgba(197, 154, 42, 0.4));
+  border-color: rgba(247, 211, 92, 0.6);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.25),
+    0 0 12px rgba(247, 211, 92, 0.35),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.game-star-badge.star-level-gold .game-star-icon {
+  background: linear-gradient(135deg, var(--star-gold), var(--star-gold-dark));
+  color: #2d1b04;
+}
+
+.game-star-badge.star-level-red {
+  background: linear-gradient(135deg, rgba(255, 127, 127, 0.28), rgba(212, 85, 85, 0.42));
+  border-color: rgba(255, 127, 127, 0.6);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.28),
+    0 0 12px rgba(255, 127, 127, 0.45),
+    inset 0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+.game-star-badge.star-level-red .game-star-icon {
+  background: linear-gradient(135deg, var(--star-red), var(--star-red-dark));
+  color: #2d0c0c;
+}
+
 .game-win-overlay {
   position: absolute;
   inset: 0;
@@ -1500,42 +1610,6 @@ main {
 .game-win-overlay.hidden {
   opacity: 0;
   pointer-events: none;
-}
-
-.game-win-persistent {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(163, 255, 206, 0.98));
-  color: #04130a;
-  font-weight: 700;
-  font-size: 0.8rem;
-  max-width: 100%;
-  white-space: normal;
-  text-align: center;
-  box-shadow: 0 0 12px rgba(163, 255, 206, 0.65);
-  margin: 0 auto;
-}
-
-.game-win-persistent::before {
-  content: "✓";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.2em;
-  height: 1.2em;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  font-size: 0.9em;
-}
-
-.game-win-persistent.hidden {
-  display: none;
 }
 
 

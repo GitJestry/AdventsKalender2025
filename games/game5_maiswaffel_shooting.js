@@ -480,7 +480,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
 
     result.classList.remove("hidden");
     introOverlay.classList.remove("hidden");
-    if (won) onWin();
+    if (won) onWin({ level: "brown", label: "Brauner Stern" });
   }
 
   function moveCrosshair(evt) {
