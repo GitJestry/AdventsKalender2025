@@ -837,43 +837,11 @@ function openGameForEntry(entry) {
   const gameDay = document.getElementById("gameDay");
   const gameTitle = document.getElementById("gameTitle");
   const gameGift = document.getElementById("gameGift");
-  const gameStory = document.getElementById("gameStory");
-  const gameMemory = document.getElementById("gameMemory");
-  const gameLetter = document.getElementById("gameLetter");
-  const msgLocked = document.getElementById("gameMessageLocked");
-  const msgBody = document.getElementById("gameMessageBody");
   const container = document.getElementById("gameContainer");
 
   if (gameDay) gameDay.textContent = String(entry.day);
   if (gameTitle) gameTitle.textContent = entry.title ?? "";
   if (gameGift) gameGift.textContent = entry.giftLabel ?? "";
-  if (gameStory) gameStory.textContent = entry.story ?? "";
-
-  if (gameMemory) {
-    if (entry.memory) {
-      gameMemory.innerHTML = entry.memory;
-      gameMemory.style.display = "block";
-    } else {
-      gameMemory.innerHTML = "";
-      gameMemory.style.display = "none";
-    }
-  }
-
-  if (gameLetter) {
-    gameLetter.textContent = entry.magicLetter ?? "";
-  }
-
-  const completedDays = getCompletedDays();
-  const isCompleted = completedDays.includes(entry.day);
-
-  if (msgLocked) msgLocked.style.display = isCompleted ? "none" : "block";
-  if (msgBody) {
-    if (isCompleted) {
-      msgBody.classList.remove("hidden");
-    } else {
-      msgBody.classList.add("hidden");
-    }
-  }
 
   destroyCurrentGame();
   currentGameDay = entry.day;
@@ -928,11 +896,6 @@ function handleGameWin(day) {
     door.classList.remove("locked", "available");
     door.classList.add("open", "completed");
   }
-
-  const msgLocked = document.getElementById("gameMessageLocked");
-  const msgBody = document.getElementById("gameMessageBody");
-  if (msgLocked) msgLocked.style.display = "none";
-  if (msgBody) msgBody.classList.remove("hidden");
 
   // Gewinner-Text für Celines Advent-Challenge
   const message = `Du hast Gewonnen! Nun darfst du dein ${day}-tes Adventgeschenk öffnen.`;
