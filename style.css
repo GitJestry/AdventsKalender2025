@@ -889,21 +889,53 @@ main {
 }
 
 .door-status-icon {
+  --status-primary: var(--star-gold);
+  --status-secondary: var(--star-gold-dark);
+  --status-glow: rgba(247, 211, 92, 0.48);
   width: 2.4rem;
   height: 2.4rem;
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.9);
   background:
-    radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.95), transparent 55%),
-    radial-gradient(circle at 70% 130%, rgba(255, 200, 120, 0.9), transparent 60%),
-    linear-gradient(145deg, #0f5b2a, #0b3a1c);
+    radial-gradient(circle at 28% 32%, rgba(255, 255, 255, 0.55), transparent 50%),
+    radial-gradient(circle at 72% 72%, rgba(255, 255, 255, 0.26), transparent 60%),
+    linear-gradient(145deg, var(--status-primary), var(--status-secondary));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #ffffff;
-  box-shadow: 0 0 18px rgba(0, 0, 0, 0.55);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--status-primary);
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.35),
+    0 0 14px var(--status-glow);
+  box-shadow:
+    0 0 18px rgba(0, 0, 0, 0.55),
+    0 0 12px var(--status-glow);
+}
+
+.door-status-icon.star-level-brown {
+  --status-primary: var(--star-brown);
+  --status-secondary: var(--star-brown-dark);
+  --status-glow: rgba(197, 139, 91, 0.45);
+}
+
+.door-status-icon.star-level-silver {
+  --status-primary: var(--star-silver);
+  --status-secondary: var(--star-silver-dark);
+  --status-glow: rgba(223, 230, 239, 0.5);
+}
+
+.door-status-icon.star-level-gold {
+  --status-primary: var(--star-gold);
+  --status-secondary: var(--star-gold-dark);
+  --status-glow: rgba(247, 211, 92, 0.52);
+}
+
+.door-status-icon.star-level-red {
+  --status-primary: var(--star-red);
+  --status-secondary: var(--star-red-dark);
+  --status-glow: rgba(255, 127, 127, 0.5);
 }
 
 .door.completed .door-status {
@@ -1509,10 +1541,10 @@ main {
   --badge-outer: rgba(197, 139, 91, 0.28);
   --badge-sparkle: rgba(255, 237, 214, 0.55);
   position: absolute;
-  top: -4rem;
-  left: -4rem;
-  width: 11.2rem;
-  height: 11.2rem;
+  top: -4.8rem;
+  left: -4.8rem;
+  width: 13.44rem;
+  height: 13.44rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;

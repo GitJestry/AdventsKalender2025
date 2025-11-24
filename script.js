@@ -425,7 +425,7 @@ function initCalendar() {
               </div>
               <div class="door-hinge" aria-hidden="true"></div>
               <div class="door-status">
-                <div class="door-status-icon" aria-hidden="true">✓</div>
+                <div class="door-status-icon" aria-hidden="true">★</div>
               </div>
             </div>
           </div>
@@ -433,6 +433,9 @@ function initCalendar() {
 
       const starLayer = door.querySelector(".door-star-dust");
       createDoorStarfield(starLayer);
+
+      const starInfo = getStarForDay(entry.day);
+      renderDoorStatusStar(door, starInfo);
 
       if (isAvailable && !isCompleted && !isOpened) {
         setupDoorPullInteraction(door, Number(entry.day));
@@ -878,6 +881,21 @@ function renderGameStarBadge(starInfo) {
   badge.classList.add(`star-level-${normalized.level}`);
 }
 
+function renderDoorStatusStar(door, starInfo) {
+  if (!door) return;
+
+  const icon = door.querySelector(".door-status-icon");
+  if (!icon) return;
+
+  const levelClasses = STAR_LEVELS.map((lvl) => `star-level-${lvl}`);
+  icon.classList.remove(...levelClasses);
+
+  const normalized = sanitizeStarInfo(starInfo || {});
+  icon.textContent = "★";
+  icon.classList.add(`star-level-${normalized.level}`);
+  icon.setAttribute("title", normalized.label);
+}
+
 
 function openGameForEntry(entry) {
   const overlay = document.getElementById("gameOverlay");
@@ -955,6 +973,7 @@ function handleGameWin(day, result) {
   if (door) {
     door.classList.remove("locked", "available");
     door.classList.add("open", "completed");
+    renderDoorStatusStar(door, starInfo);
   }
 
   const message = `Du hast gewonnen! ${starInfo.label} – nun darfst du dein ${day}-tes Adventgeschenk öffnen.`;
