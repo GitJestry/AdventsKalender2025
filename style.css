@@ -1095,14 +1095,17 @@ main {
 }
 
 .game-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 3.4fr) minmax(0, 2fr);
-  gap: 1.1rem;
-  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-items: stretch;
 }
 
-.game-area h3,
-.game-message h3 {
+.game-area {
+  width: 100%;
+}
+
+.game-area h3 {
   margin: 0 0 0.4rem;
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -1117,65 +1120,6 @@ main {
     rgba(0, 0, 0, 0.45);
   padding: 0.75rem 0.9rem 0.8rem;
   min-height: 360px;
-}
-
-.game-message {
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(0, 0, 0, 0.35);
-  padding: 0.75rem 0.9rem 0.85rem;
-}
-
-.game-message-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.4rem 0.6rem;
-  margin-bottom: 0.6rem;
-}
-
-.game-message-locked {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.game-message-body.hidden {
-  display: none;
-}
-
-.game-story {
-  font-size: 0.94rem;
-  color: var(--text-main);
-  margin-bottom: 0.6rem;
-}
-
-.game-memory {
-  padding: 0.6rem 0.75rem;
-  border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 0.9rem;
-  color: var(--accent-soft);
-  margin-bottom: 0.6rem;
-}
-
-.game-memory strong {
-  color: var(--accent);
-}
-
-.game-letter {
-  font-size: 0.95rem;
-  color: var(--accent-soft);
-}
-
-.game-letter span {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.25);
-  font-weight: 700;
-  color: var(--accent);
 }
 
 /* Wärmflaschen-Spiel */
@@ -1486,7 +1430,7 @@ main {
   }
 
   .game-layout {
-    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
   }
 
   .game-close {
@@ -1512,6 +1456,10 @@ main {
 .game-title-block {
   flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .game-area-inner {
@@ -1557,8 +1505,8 @@ main {
 .game-win-persistent {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  align-self: flex-start;
+  justify-content: center;
+  align-self: center;
   gap: 0.35rem;
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
@@ -1568,8 +1516,9 @@ main {
   font-size: 0.8rem;
   max-width: 100%;
   white-space: normal;
-  text-align: right;
+  text-align: center;
   box-shadow: 0 0 12px rgba(163, 255, 206, 0.65);
+  margin: 0 auto;
 }
 
 .game-win-persistent::before {
