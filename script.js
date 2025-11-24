@@ -893,9 +893,10 @@ function renderDoorStatusStar(door, starInfo) {
   icon.classList.remove(...levelClasses);
 
   const normalized = sanitizeStarInfo(starInfo || {});
-  icon.textContent = "★";
+  icon.innerHTML = '<span class="star-emblem"></span>';
   icon.classList.add(`star-level-${normalized.level}`);
   icon.setAttribute("title", normalized.label);
+  icon.setAttribute("aria-label", normalized.label);
 }
 
 
