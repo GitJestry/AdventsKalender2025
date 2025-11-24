@@ -40,6 +40,11 @@ const ADVENT_CONFIG = {
       id: "capybara_sprint",
       script: "games/game6_capybara_sprint.js",
       style: null
+    },
+    wire_runner_7: {
+      id: "wire_runner_7",
+      script: "games/game7_wire_runner.js",
+      style: null
     }
   },
 
@@ -98,6 +103,15 @@ const ADVENT_CONFIG = {
       memory: "",
       magicLetter: "",
       gameId: "capybara_sprint"
+    },
+    {
+      day: 7,
+      title: "Golden Wire Runner",
+      giftLabel: "Im echten Kalender: tbd",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "wire_runner_7"
     }
   ]
 };
