@@ -4,8 +4,17 @@ window.AdventGames = window.AdventGames || {};
 
 window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(container, options) {
   const CAPACITY = 4;
-  const COLORS = ["RED", "GREEN", "BLUE", "GOLD"];
-  const BOTTLES_COUNT = 6;
+  const COLORS = [
+    "RED",
+    "GREEN",
+    "BLUE",
+    "GOLD",
+    "PURPLE",
+    "PINK",
+    "TEAL",
+    "ORANGE"
+  ];
+  const BOTTLES_COUNT = 16;
 
   let state = createInitialState();
   let selectedIndex = null;
@@ -14,6 +23,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   let isAnimating = false;
 
   let waterFillSound = null;
+  let selectSound = null;
   try {
     waterFillSound = new Audio("assets/audio/water_fill_sound.wav");
     waterFillSound.volume = 0.25;
@@ -21,14 +31,30 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     console.warn("Konnte Wasserfüll-Sound nicht laden", e);
   }
 
+  try {
+    selectSound = new Audio("assets/audio/draw_sound.wav");
+    selectSound.volume = 0.35;
+  } catch (e) {
+    console.warn("Konnte Auswahl-Sound nicht laden", e);
+  }
+
   function playWaterFillSound() {
     if (!waterFillSound) return;
     try {
-      const s = waterFillSound.cloneNode(true);
-      s.volume = waterFillSound.volume;
-      s.play().catch(() => {});
+      waterFillSound.currentTime = 0;
+      waterFillSound.play().catch(() => {});
     } catch (e) {
       console.warn("Konnte Wasserfüll-Sound nicht abspielen", e);
+    }
+  }
+
+  function playSelectSound() {
+    if (!selectSound) return;
+    try {
+      selectSound.currentTime = 0;
+      selectSound.play().catch(() => {});
+    } catch (e) {
+      console.warn("Konnte Auswahl-Sound nicht abspielen", e);
     }
   }
 
@@ -96,11 +122,12 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     shuffle(units);
 
     const bottles = Array.from({ length: BOTTLES_COUNT }, () => []);
+    const filledBottleCount = Math.min(BOTTLES_COUNT - 2, COLORS.length + 2);
 
     let bottleIndex = 0;
     while (units.length) {
       bottles[bottleIndex].push(units.pop());
-      bottleIndex = (bottleIndex + 1) % (BOTTLES_COUNT - 2);
+      bottleIndex = (bottleIndex + 1) % filledBottleCount;
     }
 
     return bottles;
@@ -169,6 +196,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
         return;
       }
       selectedIndex = index;
+      playSelectSound();
       render();
       return;
     }
@@ -184,6 +212,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
     if (!canPour(from, to)) {
       selectedIndex = index;
+      playSelectSound();
       render();
       return;
     }
@@ -210,8 +239,6 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   function animatePour(fromIndex, toIndex) {
     isAnimating = true;
 
-    playWaterFillSound();
-
     const flasks = grid.querySelectorAll(".flask");
     const fromEl = flasks[fromIndex];
     const toEl = flasks[toIndex];
@@ -221,6 +248,9 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
     setTimeout(() => {
       const moved = doPour(fromIndex, toIndex);
+      if (moved > 0) {
+        playWaterFillSound();
+      }
       if (moved > 0) {
         moveCount++;
         updateMoves();
