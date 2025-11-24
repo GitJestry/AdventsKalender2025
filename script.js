@@ -5,6 +5,7 @@ const STORAGE_KEY_OPENED = "exitAdvent_openedDays_v1";
 const STORAGE_KEY_STAR_LEVELS = "exitAdvent_starLevels_v1";
 
 const STORAGE_KEY_PULL_PROGRESS = "exitAdvent_pullProgress_v1";
+const STORAGE_KEY_MUSIC_MUTED = "exitAdvent_musicMuted_v1";
 
 const STAR_LEVELS = ["brown", "silver", "gold", "red"];
 const STAR_LEVEL_LABELS = {
@@ -34,6 +35,22 @@ function saveDoorPullProgress(progress) {
   }
 }
 
+function getStoredMusicMuted() {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY_MUSIC_MUTED) === "true";
+  } catch (e) {
+    return false;
+  }
+}
+
+function setStoredMusicMuted(isMuted) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY_MUSIC_MUTED, isMuted ? "true" : "false");
+  } catch (e) {
+    console.warn("Konnte Musik-Status nicht speichern:", e);
+  }
+}
+
 let doorPullProgress = getDoorPullProgress();
 
 let dayStarLevels = getDayStarLevels();
@@ -52,6 +69,8 @@ function setupBackgroundMusic() {
     backgroundMusic.volume = 0.05; // deutlich leiser
     backgroundMusic.autoplay = true;
     backgroundMusic.preload = "auto";
+
+    backgroundMusic.muted = getStoredMusicMuted();
 
     // Falls das Loop-Flag vom Browser ignoriert wird oder das Playback unterbrochen wurde,
     // starte das Lied erneut sobald es endet.
@@ -326,6 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupVictorySound();
   initSnow();
   initHeader();
+  initAudioToggle();
   initCalendar();
   initGameOverlay();
 });
@@ -377,6 +397,53 @@ function initHeader() {
       }
     }
   }
+}
+
+function initAudioToggle() {
+  const toggle = document.getElementById("musicToggle");
+  if (!toggle) return;
+
+  const iconEl = toggle.querySelector(".audio-icon");
+  const labelEl = toggle.querySelector(".audio-label");
+
+  const updateToggleUI = () => {
+    if (!backgroundMusic) {
+      toggle.disabled = true;
+      toggle.classList.add("is-muted");
+      toggle.setAttribute("aria-pressed", "true");
+      toggle.setAttribute("aria-label", "Musik konnte nicht geladen werden");
+      if (labelEl) labelEl.textContent = "Musik (nicht verfügbar)";
+      if (iconEl) iconEl.textContent = "🚫";
+      return;
+    }
+
+    const isMuted = backgroundMusic.muted;
+    toggle.classList.toggle("is-muted", isMuted);
+    toggle.setAttribute("aria-pressed", isMuted ? "true" : "false");
+    toggle.setAttribute("aria-label", isMuted ? "Musik einschalten" : "Musik stummschalten");
+
+    if (labelEl) {
+      labelEl.textContent = isMuted ? "Musik aus" : "Musik an";
+    }
+    if (iconEl) {
+      iconEl.textContent = isMuted ? "🔇" : "🔈";
+    }
+  };
+
+  toggle.addEventListener("click", () => {
+    if (!backgroundMusic) return;
+
+    backgroundMusic.muted = !backgroundMusic.muted;
+    setStoredMusicMuted(backgroundMusic.muted);
+
+    if (!backgroundMusic.muted) {
+      backgroundMusic.play().catch(() => {});
+    }
+
+    updateToggleUI();
+  });
+
+  updateToggleUI();
 }
 
 function initCalendar() {
