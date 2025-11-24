@@ -3,24 +3,17 @@
 window.AdventGames = window.AdventGames || {};
 
 window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(container, options) {
-  const CAPACITY = 4;
-  const COLORS = [
-    "RED",
-    "GREEN",
-    "BLUE",
-    "GOLD",
-    "PURPLE",
-    "PINK",
-    "TEAL",
-    "ORANGE"
-  ];
-  const BOTTLES_COUNT = 16;
+  const CAPACITY = 6;
+  const COLORS = ["RED", "GREEN", "BLUE", "GOLD"];
+  const BOTTLES_COUNT = 8;
 
   let state = createInitialState();
   let selectedIndex = null;
   let moveCount = 0;
   let hasWon = false;
   let isAnimating = false;
+  let minimumMoves = null;
+  let isComputingMin = false;
 
   let waterFillSound = null;
   let selectSound = null;
@@ -146,15 +139,31 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     moveCount = 0;
     hasWon = false;
     isAnimating = false;
+    minimumMoves = null;
+    isComputingMin = true;
     updateMoves();
     status.textContent =
       "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Schaffst du alle Farben?";
     status.classList.remove("win");
     render();
+
+    const snapshot = cloneState(state);
+    window.setTimeout(() => {
+      minimumMoves = calculateMinimumMoves(snapshot);
+      isComputingMin = false;
+      updateMoves();
+    }, 30);
   }
 
   function updateMoves() {
-    movesLabel.textContent = `Züge: ${moveCount}`;
+    const minLabel =
+      minimumMoves === null
+        ? isComputingMin
+          ? "Min wird berechnet..."
+          : "–"
+        : `Min: ${minimumMoves}`;
+
+    movesLabel.textContent = `Züge: ${moveCount} (${minLabel})`;
   }
 
   function render() {
@@ -255,11 +264,12 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
         const won = checkWin();
         if (won && !hasWon) {
           hasWon = true;
+          const reward = determineReward(moveCount);
           status.textContent =
-            "Geschafft! Alle Glitzerfarben sind sortiert – die Wärmflaschen-Challenge ist bestanden. ✨";
+            `Geschafft! Alle Glitzerfarben sind sortiert – die Wärmflaschen-Challenge ist bestanden. ✨ (${reward.label})`;
           status.classList.add("win");
           try {
-            onWin({ level: "brown", label: "Brauner Stern" });
+            onWin(reward);
           } catch (e) {
             console.error("onWin callback error:", e);
           }
@@ -303,6 +313,110 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   function checkWin() {
     return state.every((bottle) => {
       if (bottle.length === 0) return true;
+      const first = bottle[0];
+      return bottle.every((c) => c === first);
+    });
+  }
+
+  function determineReward(moves) {
+    const fallbacks = { level: "brown", label: "Bronzener Stern" };
+    if (typeof minimumMoves !== "number") return fallbacks;
+
+    const diff = moves - minimumMoves;
+    if (diff === 0) return { level: "red", label: "Roter Stern" };
+    if (diff >= 2 && diff <= 3) return { level: "gold", label: "Goldener Stern" };
+    if (diff >= 4 && diff <= 5) return { level: "silver", label: "Silberner Stern" };
+    return fallbacks;
+  }
+
+  function cloneState(current) {
+    return current.map((bottle) => bottle.slice());
+  }
+
+  function calculateMinimumMoves(startState) {
+    const startKey = serializeState(startState);
+    const seen = new Set([startKey]);
+    const queue = [{ state: startState, moves: 0 }];
+    let idx = 0;
+
+    while (idx < queue.length) {
+      const { state: cur, moves } = queue[idx++];
+
+      if (checkStateWin(cur)) {
+        return moves;
+      }
+
+      for (let from = 0; from < cur.length; from++) {
+        for (let to = 0; to < cur.length; to++) {
+          if (from === to) continue;
+          if (!canPourState(cur, from, to)) continue;
+
+          const next = pourState(cur, from, to);
+          if (!next) continue;
+
+          const key = serializeState(next);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          queue.push({ state: next, moves: moves + 1 });
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function canPourState(curState, fromIndex, toIndex) {
+    const fromBottle = curState[fromIndex];
+    const toBottle = curState[toIndex];
+    if (!fromBottle.length) return false;
+    if (toBottle.length >= CAPACITY) return false;
+
+    const topColor = fromBottle[fromBottle.length - 1];
+    const destTopColor = toBottle[toBottle.length - 1];
+
+    if (destTopColor && destTopColor !== topColor) {
+      return false;
+    }
+
+    if (toBottle.length === 0 && fromBottle.every((c) => c === topColor)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function pourState(curState, fromIndex, toIndex) {
+    const next = curState.map((bottle) => bottle.slice());
+    const fromBottle = next[fromIndex];
+    const toBottle = next[toIndex];
+    if (!fromBottle.length || toBottle.length >= CAPACITY) return null;
+
+    const topColor = fromBottle[fromBottle.length - 1];
+    const destTopColor = toBottle[toBottle.length - 1];
+    if (destTopColor && destTopColor !== topColor) return null;
+
+    let moved = 0;
+    while (
+      fromBottle.length &&
+      fromBottle[fromBottle.length - 1] === topColor &&
+      toBottle.length < CAPACITY
+    ) {
+      toBottle.push(fromBottle.pop());
+      moved++;
+    }
+
+    if (moved === 0) return null;
+    return next;
+  }
+
+  function serializeState(curState) {
+    return curState.map((bottle) => bottle.join(",")).join("|");
+  }
+
+  function checkStateWin(curState) {
+    return curState.every((bottle) => {
+      if (bottle.length === 0) return true;
+      if (bottle.length !== CAPACITY) return false;
       const first = bottle[0];
       return bottle.every((c) => c === first);
     });
