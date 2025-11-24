@@ -425,7 +425,9 @@ function initCalendar() {
               </div>
               <div class="door-hinge" aria-hidden="true"></div>
               <div class="door-status">
-                <div class="door-status-icon" aria-hidden="true">★</div>
+                <div class="door-status-icon" aria-hidden="true">
+                  <span class="star-emblem"></span>
+                </div>
               </div>
             </div>
           </div>
