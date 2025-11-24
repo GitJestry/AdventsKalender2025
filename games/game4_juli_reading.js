@@ -28,7 +28,7 @@ window.AdventGames["juli_crime_reading"] = function initReadingChallenge(
     button.disabled = true;
     button.textContent = "Geschafft!";
     wrapper.classList.add("reading-challenge--completed");
-    onWin();
+    onWin({ level: "brown", label: "Brauner Stern" });
   });
 
   wrapper.appendChild(message);

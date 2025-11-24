@@ -691,7 +691,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
         statusLineEl.classList.remove("trace-status-fail");
       }
       try {
-        onWin();
+        onWin({ level: "brown", label: "Brauner Stern" });
       } catch (e) {
         console.error("onWin callback error:", e);
       }
