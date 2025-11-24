@@ -856,6 +856,10 @@ function renderGameStarBadge(starInfo) {
   badge.classList.remove(...levelClasses, "hidden");
 
   if (!starInfo) {
+    badge.removeAttribute("aria-label");
+    badge.removeAttribute("title");
+    const label = badge.querySelector(".game-star-label");
+    if (label) label.textContent = "";
     badge.classList.add("hidden");
     return;
   }
@@ -866,6 +870,10 @@ function renderGameStarBadge(starInfo) {
   if (labelEl) {
     labelEl.textContent = normalized.label;
   }
+
+  const accessibleLabel = `${normalized.label} – Stern freigeschaltet`;
+  badge.setAttribute("aria-label", accessibleLabel);
+  badge.setAttribute("title", accessibleLabel);
 
   badge.classList.add(`star-level-${normalized.level}`);
 }
