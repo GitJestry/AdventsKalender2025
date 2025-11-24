@@ -1593,10 +1593,10 @@ main {
   --badge-outer: rgba(197, 139, 91, 0.28);
   --badge-sparkle: rgba(255, 237, 214, 0.55);
   position: absolute;
-  top: -5.75rem;
-  left: -5.75rem;
-  width: 16.1rem;
-  height: 16.1rem;
+  top: -3rem;
+  left: -3rem;
+  width: 8.05rem;
+  height: 8.05rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1605,7 +1605,7 @@ main {
   border: none;
   border-radius: 0;
   box-shadow: none;
-  transform: rotate(-12deg) scale(1.02);
+  transform: rotate(-10deg);
   z-index: 10;
   pointer-events: none;
 }
@@ -1615,7 +1615,7 @@ main {
 }
 
 .game-star-icon {
-  --emblem-size: 15.7rem;
+  --emblem-size: 7.85rem;
   --emblem-primary: var(--badge-primary);
   --emblem-secondary: var(--badge-secondary);
   --emblem-glow: var(--badge-glow);
@@ -1629,7 +1629,7 @@ main {
   font-size: 0;
   filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.32)) drop-shadow(0 0 24px var(--badge-outer));
   z-index: 1;
-  animation: starBadgePulse 4s ease-in-out infinite;
+  animation: none;
 }
 
 .game-star-icon::before,
@@ -1651,7 +1651,7 @@ main {
 .game-star-icon .star-emblem,
 .game-star-icon .star-emblem::before,
 .game-star-icon .star-emblem::after {
-  animation: starBadgePulse 4s ease-in-out infinite;
+  animation: none;
 }
 
 .game-star-icon .star-emblem {
@@ -1692,9 +1692,9 @@ main {
   --badge-glow: rgba(247, 211, 92, 0.65);
   --badge-outer: rgba(247, 211, 92, 0.45);
   --badge-sparkle: rgba(255, 241, 196, 0.9);
-  transform: rotate(-9deg) scale(1.08);
+  transform: rotate(-8deg);
   box-shadow: none;
-  animation: starBadgeHover 5.6s ease-in-out infinite;
+  animation: none;
 }
 
 .game-star-badge.star-level-red {
@@ -1703,9 +1703,9 @@ main {
   --badge-glow: rgba(255, 127, 127, 0.72);
   --badge-outer: rgba(255, 127, 127, 0.52);
   --badge-sparkle: rgba(255, 214, 214, 0.95);
-  transform: rotate(-6deg) scale(1.12);
+  transform: rotate(-8deg);
   box-shadow: none;
-  animation: starBadgeHover 4.6s ease-in-out infinite, starBadgePulse 3.4s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes starBadgePulse {
