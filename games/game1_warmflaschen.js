@@ -26,13 +26,13 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   let selectSound = null;
   try {
     waterFillSound = new Audio("assets/audio/water_fill_sound.wav");
-    waterFillSound.volume = 0.25;
+    waterFillSound.volume = 0.1;
   } catch (e) {
     console.warn("Konnte Wasserfüll-Sound nicht laden", e);
   }
 
   try {
-    selectSound = new Audio("assets/audio/draw_sound.wav");
+    selectSound = new Audio("assets/audio/select_sound.wav");
     selectSound.volume = 0.35;
   } catch (e) {
     console.warn("Konnte Auswahl-Sound nicht laden", e);
@@ -190,7 +190,6 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
   function handleFlaskClick(index) {
     if (hasWon || isAnimating) return;
-
     if (selectedIndex === null) {
       if (state[index].length === 0) {
         return;
@@ -203,6 +202,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
     if (selectedIndex === index) {
       selectedIndex = null;
+      playSelectSound();
       render();
       return;
     }
@@ -250,8 +250,6 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
       const moved = doPour(fromIndex, toIndex);
       if (moved > 0) {
         playWaterFillSound();
-      }
-      if (moved > 0) {
         moveCount++;
         updateMoves();
         const won = checkWin();
