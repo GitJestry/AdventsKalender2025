@@ -2,6 +2,16 @@
 
 const STORAGE_KEY_COMPLETED = "exitAdvent_completedDays_v8";
 const STORAGE_KEY_OPENED = "exitAdvent_openedDays_v1";
+const STORAGE_KEY_STAR_LEVELS = "exitAdvent_dayStars_v1";
+
+const STAR_LEVELS = ["brown", "silver", "gold", "red"];
+const DEFAULT_STAR_LEVEL = "brown";
+const DEFAULT_STAR_LABELS = {
+  brown: "Geschafft! Adventstern eingesammelt.",
+  silver: "Glänzender Erfolg! Silberstern geholt.",
+  gold: "Goldener Sieg! Du hast richtig geglänzt.",
+  red: "Legendärer Run! Roter Stern freigespielt.",
+};
 
 const STORAGE_KEY_PULL_PROGRESS = "exitAdvent_pullProgress_v1";
 
@@ -827,6 +837,102 @@ function destroyCurrentGame() {
   }
   currentGameInstance = null;
   currentGameDay = null;
+  updateGameStarBadge(null);
+}
+
+function normalizeStarData(starData) {
+  const providedLevel = starData?.level;
+  const hasValidLevel = STAR_LEVELS.includes(providedLevel);
+  const level = hasValidLevel ? providedLevel : DEFAULT_STAR_LEVEL;
+  const labelFromData = typeof starData?.label === "string" ? starData.label.trim() : "";
+  const label = labelFromData || DEFAULT_STAR_LABELS[level] || DEFAULT_STAR_LABELS[DEFAULT_STAR_LEVEL];
+
+  return { level, label };
+}
+
+function describeStarLevel(level) {
+  switch (level) {
+    case "silver":
+      return "Silberner Stern";
+    case "gold":
+      return "Goldener Stern";
+    case "red":
+      return "Roter Stern";
+    case "brown":
+    default:
+      return "Brauner Stern";
+  }
+}
+
+function getDayStarMap() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_STAR_LEVELS);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+
+    const sanitized = {};
+    Object.entries(parsed).forEach(([key, value]) => {
+      const day = Number(key);
+      if (!Number.isInteger(day) || day < 1 || day > 24) return;
+      sanitized[day] = normalizeStarData(value);
+    });
+    return sanitized;
+  } catch {
+    return {};
+  }
+}
+
+function saveDayStarMap(map) {
+  if (typeof map !== "object" || map === null) return;
+  try {
+    localStorage.setItem(STORAGE_KEY_STAR_LEVELS, JSON.stringify(map));
+  } catch {
+    // Speicherung des Sternlevels fehlgeschlagen – keine kritische Funktion.
+  }
+}
+
+function saveDayStar(day, starData) {
+  const normalized = normalizeStarData(starData);
+  const currentMap = getDayStarMap();
+  currentMap[day] = normalized;
+  saveDayStarMap(currentMap);
+  return normalized;
+}
+
+function getStoredStarForDay(day) {
+  const map = getDayStarMap();
+  return map[day];
+}
+
+function getDisplayStarForDay(day, isCompleted) {
+  const stored = getStoredStarForDay(day);
+  if (stored) return stored;
+  if (isCompleted) {
+    return saveDayStar(day, { level: DEFAULT_STAR_LEVEL });
+  }
+  return null;
+}
+
+function updateGameStarBadge(starData) {
+  const badge = document.getElementById("gameStarBadge");
+  const labelEl = document.getElementById("gameStarLabel");
+  const levelEl = document.getElementById("gameStarLevel");
+  if (!badge || !labelEl || !levelEl) return;
+
+  if (!starData) {
+    badge.classList.add("hidden");
+    badge.removeAttribute("data-level");
+    labelEl.textContent = "";
+    levelEl.textContent = "";
+    return;
+  }
+
+  const normalized = normalizeStarData(starData);
+  badge.dataset.level = normalized.level;
+  labelEl.textContent = normalized.label;
+  levelEl.textContent = describeStarLevel(normalized.level);
+  badge.classList.remove("hidden");
 }
 
 
@@ -866,6 +972,9 @@ function openGameForEntry(entry) {
   const completedDays = getCompletedDays();
   const isCompleted = completedDays.includes(entry.day);
 
+  const existingStar = getDisplayStarForDay(entry.day, isCompleted);
+  updateGameStarBadge(existingStar);
+
   if (msgLocked) msgLocked.style.display = isCompleted ? "none" : "block";
   if (msgBody) {
     if (isCompleted) {
@@ -890,7 +999,7 @@ function openGameForEntry(entry) {
       container.innerHTML = "";
       currentGameInstance = window.AdventGames[entry.gameId](container, {
         day: entry.day,
-        onWin: () => handleGameWin(entry.day)
+        onWin: (starData) => handleGameWin(entry.day, starData)
       });
     } else {
       container.innerHTML =
@@ -915,13 +1024,16 @@ function openGameForEntry(entry) {
 }
 
 
-function handleGameWin(day) {
+function handleGameWin(day, starData) {
   playVictorySound();
   const completedDays = getCompletedDays();
   if (!completedDays.includes(day)) {
     completedDays.push(day);
     saveCompletedDays(completedDays);
   }
+
+  const normalizedStar = saveDayStar(day, starData || { level: DEFAULT_STAR_LEVEL });
+  updateGameStarBadge(normalizedStar);
 
   const door = document.querySelector(`.door[data-day="${day}"]`);
   if (door) {
@@ -935,11 +1047,10 @@ function handleGameWin(day) {
   if (msgBody) msgBody.classList.remove("hidden");
 
   // Gewinner-Text für Celines Advent-Challenge
-  const message = `Du hast Gewonnen! Nun darfst du dein ${day}-tes Adventgeschenk öffnen.`;
+  const message = `${normalizedStar.label} Nun darfst du dein ${day}-tes Adventgeschenk öffnen.`;
 
   const winOverlay = document.getElementById("gameWinOverlay");
   const winOverlayInner = winOverlay ? winOverlay.querySelector(".game-win-overlay-inner") : null;
-  const winPersistent = document.getElementById("gameWinPersistent");
 
   if (winOverlay && winOverlayInner) {
     winOverlayInner.innerHTML = `<p>${message}</p><small>(Klick hier, um weiterzuspielen)</small>`;
@@ -947,15 +1058,7 @@ function handleGameWin(day) {
     winOverlay.onclick = () => {
       winOverlay.classList.add("hidden");
       winOverlay.onclick = null;
-      if (winPersistent) {
-        winPersistent.textContent = message;
-        winPersistent.classList.remove("hidden");
-      }
     };
-  } else if (winPersistent) {
-    // Falls das Overlay aus irgendeinem Grund nicht existiert, zeigen wir zumindest den Balken an
-    winPersistent.textContent = message;
-    winPersistent.classList.remove("hidden");
   }
 }
 

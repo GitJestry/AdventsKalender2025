@@ -231,7 +231,10 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
             "Geschafft! Alle Glitzerfarben sind sortiert – die Wärmflaschen-Challenge ist bestanden. ✨";
           status.classList.add("win");
           try {
-            onWin();
+            onWin({
+              level: "silver",
+              label: "Sortier-Meisterschaft bestanden – Silberstern verdient!",
+            });
           } catch (e) {
             console.error("onWin callback error:", e);
           }

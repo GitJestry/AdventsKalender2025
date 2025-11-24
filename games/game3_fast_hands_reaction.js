@@ -296,7 +296,10 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       setStatus("Drei schnelle Treffer in Folge – du hast das Reaktionsspiel geschafft! 🎁");
       setHint("Du kannst das Fenster schließen und dein echtes Adventstürchen öffnen. ♥");
       try {
-        onWin();
+        onWin({
+          level: "silver",
+          label: "Reflexe on point – Silberstern erspielt!",
+        });
       } catch (e) {
         console.error("Fehler im onWin-Callback:", e);
       }

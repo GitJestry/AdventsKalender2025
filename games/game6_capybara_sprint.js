@@ -459,7 +459,10 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
 
     if (winner.isPlayer) {
       try {
-        onWin();
+        onWin({
+          level: "gold",
+          label: "Cappy-Speedrun gewonnen – Goldstern eingesammelt!",
+        });
       } catch (e) {
         console.error("onWin callback error", e);
       }

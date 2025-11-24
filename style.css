@@ -15,6 +15,10 @@
   --border-soft: rgba(255, 255, 255, 0.2);
   --door-locked: rgba(255, 255, 255, 0.08);
   --door-open: rgba(0, 0, 0, 0.2);
+  --star-brown: #b87333;
+  --star-silver: #cfd6e6;
+  --star-gold: #f6d66f;
+  --star-red: #ff6b6b;
   --blur: 18px;
   --radius-lg: 1.5rem;
   --radius-md: 1rem;
@@ -1063,6 +1067,86 @@ main {
   transform: scale(1.08);
 }
 
+.game-star-badge {
+  position: absolute;
+  top: 0.7rem;
+  right: 3.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  min-width: 140px;
+}
+
+.game-star-badge.hidden {
+  display: none;
+}
+
+.game-star-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
+}
+
+.game-star-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.game-star-label {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.game-star-level {
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.game-star-badge[data-level="brown"] {
+  color: #2a1307;
+  background: linear-gradient(145deg, rgba(184, 115, 51, 0.95), rgba(240, 194, 151, 0.9));
+  box-shadow: 0 0 14px rgba(184, 115, 51, 0.55);
+}
+
+.game-star-badge[data-level="brown"] .game-star-icon {
+  color: var(--star-brown);
+}
+
+.game-star-badge[data-level="silver"] {
+  color: #0c1630;
+  background: linear-gradient(145deg, rgba(207, 214, 230, 0.98), rgba(167, 178, 199, 0.92));
+  box-shadow: 0 0 14px rgba(207, 214, 230, 0.5);
+}
+
+.game-star-badge[data-level="silver"] .game-star-icon {
+  color: #f6f8ff;
+}
+
+.game-star-badge[data-level="gold"] {
+  color: #3e2900;
+  background: linear-gradient(145deg, rgba(246, 214, 111, 0.97), rgba(255, 237, 171, 0.9));
+  box-shadow: 0 0 16px rgba(246, 214, 111, 0.58);
+}
+
+.game-star-badge[data-level="gold"] .game-star-icon {
+  color: var(--star-gold);
+}
+
+.game-star-badge[data-level="red"] {
+  color: #fff5f4;
+  background: linear-gradient(145deg, rgba(255, 107, 107, 0.96), rgba(255, 160, 160, 0.9));
+  box-shadow: 0 0 16px rgba(255, 107, 107, 0.6);
+}
+
+.game-star-badge[data-level="red"] .game-star-icon {
+  color: var(--star-red);
+}
+
 .game-header {
   display: flex;
   align-items: center;
@@ -1552,41 +1636,6 @@ main {
 .game-win-overlay.hidden {
   opacity: 0;
   pointer-events: none;
-}
-
-.game-win-persistent {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  align-self: flex-start;
-  gap: 0.35rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(163, 255, 206, 0.98));
-  color: #04130a;
-  font-weight: 700;
-  font-size: 0.8rem;
-  max-width: 100%;
-  white-space: normal;
-  text-align: right;
-  box-shadow: 0 0 12px rgba(163, 255, 206, 0.65);
-}
-
-.game-win-persistent::before {
-  content: "✓";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.2em;
-  height: 1.2em;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  font-size: 0.9em;
-}
-
-.game-win-persistent.hidden {
-  display: none;
 }
 
 

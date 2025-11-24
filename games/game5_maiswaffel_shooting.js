@@ -480,7 +480,11 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(cont
 
     result.classList.remove("hidden");
     introOverlay.classList.remove("hidden");
-    if (won) onWin();
+    if (won)
+      onWin({
+        level: "gold",
+        label: "Scharfschuss gelungen – Goldstern freigespielt!",
+      });
   }
 
   function moveCrosshair(evt) {

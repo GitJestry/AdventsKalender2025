@@ -691,7 +691,10 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
         statusLineEl.classList.remove("trace-status-fail");
       }
       try {
-        onWin();
+        onWin({
+          level: "brown",
+          label: "Pflege-Level bestanden – Brauner Stern eingesackt!",
+        });
       } catch (e) {
         console.error("onWin callback error:", e);
       }
