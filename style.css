@@ -1474,106 +1474,189 @@ main {
   position: relative;
 }
 
-.game-star-badge {
+.sr-only {
   position: absolute;
-  top: 0.7rem;
-  right: 0.8rem;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.game-star-badge {
+  --badge-primary: var(--star-brown);
+  --badge-secondary: var(--star-brown-dark);
+  --badge-glow: rgba(197, 139, 91, 0.45);
+  --badge-outer: rgba(197, 139, 91, 0.28);
+  --badge-sparkle: rgba(255, 237, 214, 0.55);
+  position: absolute;
+  top: -1.15rem;
+  left: -1.15rem;
+  width: 5.6rem;
+  height: 5.6rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.8rem 0.45rem 0.65rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
-  color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.1));
+  border: 2px solid rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.25),
-    inset 0 0 12px rgba(255, 255, 255, 0.08);
+    0 14px 36px rgba(0, 0, 0, 0.35),
+    0 0 22px var(--badge-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+  transform: rotate(-12deg) scale(1.02);
   backdrop-filter: blur(8px);
-  z-index: 3;
+  z-index: 6;
+  pointer-events: none;
 }
 
 .game-star-badge.hidden {
   display: none;
 }
 
+.game-star-badge::before,
+.game-star-badge::after {
+  content: "";
+  position: absolute;
+  inset: -0.45rem;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.game-star-badge::before {
+  background: radial-gradient(circle, var(--badge-outer), transparent 70%);
+  filter: blur(4px);
+  opacity: 0.8;
+}
+
+.game-star-badge::after {
+  background: conic-gradient(
+    from 45deg,
+    rgba(255, 255, 255, 0.16),
+    transparent 40%,
+    rgba(255, 255, 255, 0.25),
+    transparent 70%,
+    rgba(255, 255, 255, 0.16)
+  );
+  filter: blur(1px);
+  opacity: 0.85;
+  animation: starBadgeSparkle 3.2s ease-in-out infinite;
+}
+
 .game-star-icon {
-  width: 2rem;
-  height: 2rem;
+  position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
-}
-
-.game-star-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  line-height: 1.2;
-}
-
-.game-star-label {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.game-star-hint {
-  font-size: 0.75rem;
-  color: var(--accent-soft);
-  opacity: 0.9;
+  font-size: 3.1rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--badge-primary), var(--badge-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 12px var(--badge-sparkle),
+    0 0 22px rgba(0, 0, 0, 0.45);
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35));
+  z-index: 1;
+  animation: starBadgePulse 4s ease-in-out infinite;
 }
 
 .game-star-badge.star-level-brown {
-  background: linear-gradient(135deg, rgba(197, 139, 91, 0.2), rgba(156, 98, 53, 0.35));
-  border-color: rgba(197, 139, 91, 0.5);
-}
-
-.game-star-badge.star-level-brown .game-star-icon {
-  background: linear-gradient(135deg, var(--star-brown), var(--star-brown-dark));
-  color: #1c0d06;
+  --badge-primary: var(--star-brown);
+  --badge-secondary: var(--star-brown-dark);
+  --badge-glow: rgba(197, 139, 91, 0.45);
+  --badge-outer: rgba(197, 139, 91, 0.32);
+  --badge-sparkle: rgba(255, 237, 214, 0.6);
 }
 
 .game-star-badge.star-level-silver {
-  background: linear-gradient(135deg, rgba(223, 230, 239, 0.25), rgba(168, 179, 194, 0.35));
-  border-color: rgba(223, 230, 239, 0.5);
-}
-
-.game-star-badge.star-level-silver .game-star-icon {
-  background: linear-gradient(135deg, var(--star-silver), var(--star-silver-dark));
-  color: #2f3640;
+  --badge-primary: var(--star-silver);
+  --badge-secondary: var(--star-silver-dark);
+  --badge-glow: rgba(223, 230, 239, 0.55);
+  --badge-outer: rgba(223, 230, 239, 0.38);
+  --badge-sparkle: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.32),
+    0 0 26px var(--badge-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.16);
 }
 
 .game-star-badge.star-level-gold {
-  background: linear-gradient(135deg, rgba(247, 211, 92, 0.3), rgba(197, 154, 42, 0.4));
-  border-color: rgba(247, 211, 92, 0.6);
+  --badge-primary: var(--star-gold);
+  --badge-secondary: var(--star-gold-dark);
+  --badge-glow: rgba(247, 211, 92, 0.65);
+  --badge-outer: rgba(247, 211, 92, 0.45);
+  --badge-sparkle: rgba(255, 241, 196, 0.9);
+  transform: rotate(-9deg) scale(1.08);
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.25),
-    0 0 12px rgba(247, 211, 92, 0.35),
-    inset 0 0 12px rgba(255, 255, 255, 0.08);
-}
-
-.game-star-badge.star-level-gold .game-star-icon {
-  background: linear-gradient(135deg, var(--star-gold), var(--star-gold-dark));
-  color: #2d1b04;
+    0 18px 42px rgba(0, 0, 0, 0.35),
+    0 0 28px var(--badge-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+  animation: starBadgeHover 5.6s ease-in-out infinite;
 }
 
 .game-star-badge.star-level-red {
-  background: linear-gradient(135deg, rgba(255, 127, 127, 0.28), rgba(212, 85, 85, 0.42));
-  border-color: rgba(255, 127, 127, 0.6);
+  --badge-primary: var(--star-red);
+  --badge-secondary: var(--star-red-dark);
+  --badge-glow: rgba(255, 127, 127, 0.72);
+  --badge-outer: rgba(255, 127, 127, 0.52);
+  --badge-sparkle: rgba(255, 214, 214, 0.95);
+  transform: rotate(-6deg) scale(1.12);
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.28),
-    0 0 12px rgba(255, 127, 127, 0.45),
-    inset 0 0 12px rgba(255, 255, 255, 0.1);
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    0 0 34px var(--badge-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+  animation: starBadgeHover 4.6s ease-in-out infinite, starBadgePulse 3.4s ease-in-out infinite;
 }
 
-.game-star-badge.star-level-red .game-star-icon {
-  background: linear-gradient(135deg, var(--star-red), var(--star-red-dark));
-  color: #2d0c0c;
+@keyframes starBadgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    text-shadow:
+      0 0 10px var(--badge-sparkle),
+      0 0 22px rgba(0, 0, 0, 0.38);
+  }
+
+  50% {
+    transform: scale(1.04);
+    text-shadow:
+      0 0 18px var(--badge-sparkle),
+      0 0 28px rgba(0, 0, 0, 0.44);
+  }
+}
+
+@keyframes starBadgeHover {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-10deg) scale(1.06);
+  }
+
+  50% {
+    transform: translateY(-4px) rotate(-8deg) scale(1.09);
+  }
+}
+
+@keyframes starBadgeSparkle {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: rotate(12deg) scale(1.05);
+  }
 }
 
 .game-win-overlay {
