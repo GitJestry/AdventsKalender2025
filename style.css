@@ -1268,6 +1268,22 @@ main {
   background-image: linear-gradient(135deg, #ffd36b, #fff2b8);
 }
 
+.segment-PURPLE .flask-segment-inner {
+  background-image: linear-gradient(135deg, #b38bff, #e2d5ff);
+}
+
+.segment-PINK .flask-segment-inner {
+  background-image: linear-gradient(135deg, #ff8fcf, #ffd6ec);
+}
+
+.segment-TEAL .flask-segment-inner {
+  background-image: linear-gradient(135deg, #6fe3d8, #c8fffa);
+}
+
+.segment-ORANGE .flask-segment-inner {
+  background-image: linear-gradient(135deg, #ff9f68, #ffd8c2);
+}
+
 .warm-game-status {
   margin-top: 0.3rem;
   font-size: 0.8rem;
