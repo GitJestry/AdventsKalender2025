@@ -5,9 +5,10 @@ window.AdventGames = window.AdventGames || {};
 window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(container, options) {
   const CAPACITY = 6;
   const COLORS = ["RED", "GREEN", "BLUE", "GOLD"];
-  const BOTTLES_COUNT = 8;
+  // Klassisches Setup: eine Flasche pro Farbe + 2 leere Flaschen
+  const BOTTLES_COUNT = COLORS.length + 2;
 
-  let state = createInitialState();
+  let state = null;
   let selectedIndex = null;
   let moveCount = 0;
   let hasWon = false;
@@ -51,7 +52,6 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     }
   }
 
-
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
@@ -66,7 +66,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   const title = document.createElement("div");
   title.className = "warm-game-title";
   title.textContent =
-    "Sortiere die glitzernden Farben in die Wärmflaschen. Am Ende soll jede Flasche nur eine Farbe enthalten.";
+    "Sortiere die glitzernden Farben in die Wärmflaschen. Am Ende soll jede gefüllte Flasche komplett mit nur einer Farbe gefüllt sein.";
 
   const controls = document.createElement("div");
   controls.className = "warm-game-controls";
@@ -92,7 +92,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
   const status = document.createElement("div");
   status.className = "warm-game-status";
   status.textContent =
-    "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Schaffst du alle Farben, ist das Wärmflaschen-Geschenk freigeschaltet!";
+    "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Jede volle Flasche soll am Ende nur eine Farbe enthalten.";
 
   root.appendChild(header);
   root.appendChild(grid);
@@ -115,7 +115,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     shuffle(units);
 
     const bottles = Array.from({ length: BOTTLES_COUNT }, () => []);
-    const filledBottleCount = Math.min(BOTTLES_COUNT - 2, COLORS.length + 2);
+    // Wir befüllen nur die Farbflaschen, die letzten 2 bleiben leer
+    const filledBottleCount = Math.min(BOTTLES_COUNT - 2, COLORS.length);
 
     let bottleIndex = 0;
     while (units.length) {
@@ -143,7 +144,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     isComputingMin = true;
     updateMoves();
     status.textContent =
-      "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Schaffst du alle Farben?";
+      "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Jede volle Flasche soll am Ende nur eine Farbe enthalten.";
     status.classList.remove("win");
     render();
 
@@ -266,7 +267,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
           hasWon = true;
           const reward = determineReward(moveCount);
           status.textContent =
-            `Geschafft! Alle Glitzerfarben sind sortiert – die Wärmflaschen-Challenge ist bestanden. ✨ (${reward.label})`;
+            `Geschafft! Alle Glitzerfarben sind sortiert – jede volle Wärmflasche ist einfarbig. ✨ (${reward.label})`;
           status.classList.add("win");
           try {
             onWin(reward);
@@ -275,7 +276,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
           }
         } else if (!won) {
           status.textContent =
-            "Gut gemacht! Mach weiter, bis jede Wärmflasche nur eine Farbe hat – dann ist das Geschenk wirklich verdient.";
+            "Gut gemacht! Mach weiter, bis jede volle Wärmflasche nur eine Farbe enthält – dann ist das Geschenk wirklich verdient.";
         }
       }
       selectedIndex = null;
@@ -310,29 +311,42 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     return moved;
   }
 
+  // Variante B: Nur "voll & einfarbig" zählt (oder leer)
   function checkWin() {
     return state.every((bottle) => {
       if (bottle.length === 0) return true;
+      if (bottle.length !== CAPACITY) return false;
       const first = bottle[0];
       return bottle.every((c) => c === first);
     });
   }
 
   function determineReward(moves) {
+    // Fallback, falls aus irgendeinem Grund keine Min-Züge berechnet werden konnten
     const fallbacks = { level: "brown", label: "Bronzener Stern" };
     if (typeof minimumMoves !== "number") return fallbacks;
 
     const diff = moves - minimumMoves;
-    if (diff === 0) return { level: "red", label: "Roter Stern" };
-    if (diff >= 2 && diff <= 3) return { level: "gold", label: "Goldener Stern" };
-    if (diff >= 4 && diff <= 5) return { level: "silver", label: "Silberner Stern" };
-    return fallbacks;
+
+    if (diff === 0) {
+      return { level: "red", label: "Roter Stern" };
+    }
+    if (diff >= 1 && diff <= 2) {
+      return { level: "gold", label: "Goldener Stern" };
+    }
+    if (diff >= 3 && diff <= 4) {
+      return { level: "silver", label: "Silberner Stern" };
+    }
+
+    return fallbacks; // diff >= 5 -> Bronze
   }
+
 
   function cloneState(current) {
     return current.map((bottle) => bottle.slice());
   }
 
+  // Berechnung der minimalen Züge mit denselben Regeln wie im Spiel
   function calculateMinimumMoves(startState) {
     const startKey = serializeState(startState);
     const seen = new Set([startKey]);
@@ -378,10 +392,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
       return false;
     }
 
-    if (toBottle.length === 0 && fromBottle.every((c) => c === topColor)) {
-      return false;
-    }
-
+    // keine Sonderlogik – exakt wie im echten Spiel
     return true;
   }
 
@@ -413,6 +424,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     return curState.map((bottle) => bottle.join(",")).join("|");
   }
 
+  // selbe Gewinnbedingung wie checkWin, nur auf übergebenem State
   function checkStateWin(curState) {
     return curState.every((bottle) => {
       if (bottle.length === 0) return true;
@@ -422,7 +434,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     });
   }
 
-  render();
+  // direkt mit einem frischen, schweren Level starten
+  resetGame();
 
   return {
     reset: resetGame,

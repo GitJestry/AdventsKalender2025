@@ -505,13 +505,11 @@ main {
 .door.day-6 .door-panel {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent 40%),
-    repeating-linear-gradient(
-      135deg,
+    repeating-linear-gradient(135deg,
       rgba(255, 255, 255, 0.12) 0,
       rgba(255, 255, 255, 0.12) 12px,
       rgba(220, 32, 64, 0.7) 12px,
-      rgba(220, 32, 64, 0.7) 24px
-    ),
+      rgba(220, 32, 64, 0.7) 24px),
     linear-gradient(160deg, #ff7866 0%, #d62828 40%, #7f0b12 100%);
   border-color: rgba(255, 255, 255, 0.6);
   box-shadow:
@@ -933,82 +931,69 @@ main {
   transition: opacity var(--transition-med), transform var(--transition-med);
 }
 
+/* Neuer, reduzierter Stern-Badge in den Türen */
 .door-status-icon {
   --status-primary: var(--star-gold);
   --status-secondary: var(--star-gold-dark);
-  --status-glow: rgba(247, 211, 92, 0.48);
-  --emblem-size: 3.05rem;
+  --status-glow: rgba(247, 211, 92, 0.55);
+
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--emblem-size) + 0.9rem);
-  height: calc(var(--emblem-size) + 0.9rem);
-  padding: 0.35rem;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.16), transparent 45%),
-    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.08), transparent 55%),
-    linear-gradient(145deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.85));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.65),
-    0 0 26px var(--status-glow),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.26),
-    inset 0 0 25px rgba(255, 255, 255, 0.08);
+
+  /* kompakte runde Fläche */
+  width: 4.0rem;
+  height: 4.0rem;
+  padding: 0;
+  border-radius: 999px;
+
+  /* kein dunkler Kasten mehr */
+  background: transparent;
+  border: none;
+  box-shadow: none;
   isolation: isolate;
 }
 
+/* Weicher, runder Glow hinter dem Stern */
 .door-status-icon::before {
   content: "";
   position: absolute;
-  inset: -6%;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.16) 0 42%, transparent 70%),
-    conic-gradient(from 90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.08));
-  mix-blend-mode: screen;
-  filter: blur(1px);
-  opacity: 0.85;
-  z-index: -1;
+  inset: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle,
+      rgba(255, 255, 255, 0.55) 0%,
+      var(--status-glow) 32%,
+      transparent 70%);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
+/* Kein zweites, kastenförmiges Layer mehr */
 .door-status-icon::after {
   content: "";
-  position: absolute;
-  inset: -14%;
-  border-radius: 26px;
-  background:
-    radial-gradient(circle, rgba(0, 0, 0, 0.35) 40%, transparent 68%),
-    conic-gradient(from -40deg,
-      rgba(255, 255, 255, 0.07) 0 8%,
-      transparent 8% 30%,
-      rgba(255, 255, 255, 0.12) 30% 42%,
-      transparent 42% 72%,
-      rgba(255, 255, 255, 0.16) 72% 82%,
-      transparent 82% 100%);
-  filter: blur(0.5px);
-  opacity: 0.92;
-  z-index: -2;
+  display: none;
 }
 
+/* Stern selber bleibt, bekommt nur die Halo aus oben */
 .door-status-icon .star-emblem {
   --emblem-primary: var(--status-primary);
   --emblem-secondary: var(--status-secondary);
   --emblem-glow: var(--status-glow);
   --emblem-size: 2.6rem;
+
   width: var(--emblem-size);
   height: var(--emblem-size);
+
   filter:
-    drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 0 12px var(--emblem-glow));
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px var(--emblem-glow));
   transform: rotate(-6deg) scale(0.98);
 }
 
 .door-status-icon .star-emblem::before {
   inset: 10%;
   background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)) ,
+    linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)),
     linear-gradient(145deg, var(--emblem-primary), var(--emblem-secondary));
   box-shadow:
     0 0 1px rgba(255, 255, 255, 0.4),
@@ -1675,8 +1660,7 @@ main {
   background: linear-gradient(145deg, var(--emblem-primary), var(--emblem-secondary));
   clip-path: polygon(50% 0%, 63% 34%, 98% 35%, 70% 57%, 80% 92%, 50% 72%, 20% 92%, 30% 57%, 2% 35%, 37% 34%);
   filter:
-    drop-shadow(0 0 10px rgba(0, 0, 0, 0.34))
-    drop-shadow(0 0 18px var(--emblem-glow));
+    drop-shadow(0 0 10px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 18px var(--emblem-glow));
   border-radius: 12px;
 }
 
@@ -1817,6 +1801,7 @@ main {
 }
 
 @keyframes starBadgePulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -1834,6 +1819,7 @@ main {
 }
 
 @keyframes starBadgeHover {
+
   0%,
   100% {
     transform: translateY(0) rotate(-10deg) scale(1.06);
@@ -1845,6 +1831,7 @@ main {
 }
 
 @keyframes starBadgeSparkle {
+
   0%,
   100% {
     opacity: 0.8;
@@ -2111,10 +2098,12 @@ main {
     opacity: 0;
     transform: scale(0.5);
   }
+
   35% {
     opacity: 0.95;
     transform: scale(1);
   }
+
   100% {
     opacity: 0;
     transform: scale(1.25);
@@ -2149,9 +2138,11 @@ main {
     transform: translate3d(0, 0, 0) scale(0.4);
     opacity: 0;
   }
+
   25% {
     opacity: 1;
   }
+
   100% {
     transform: translate3d(var(--dx, 0px), var(--dy, -28px), 0) scale(1);
     opacity: 0;
