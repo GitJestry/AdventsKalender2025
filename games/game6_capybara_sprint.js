@@ -14,8 +14,7 @@ const CAPY_PLAYER_SPEED_GAIN = 0.1;       // Bonus pro korrektem F/H-Treffer
 const CAPY_PLAYER_SPEED_PENALTY = 0.01;   // Abzug bei falscher Taste
 const CAPY_PLAYER_FRICTION = 1.0;         // Geschwindigkeit fällt pro Sekunde ab
 
-// Bot-Finishzeiten in Sekunden – bester Bot ist Basis für Stern-Zeiten
-// Schnellster Bot: 15.0 Sekunden
+// Bot-Finishzeiten in Sekunden – Basis für konstante Geschwindigkeit
 const CAPY_BOT_FINISH_TIMES = [15.0, 15.7, 16.5, 17.3, 16.3];
 
 // Sternstufen nach Zeitdifferenz zur Bestzeit des schnellsten Bots
@@ -396,37 +395,42 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       rankings.appendChild(pill);
     });
 
-    // Für Sterne nehmen wir immer die Design-Bestzeit des schnellsten Bots
-    const bestBotBaseTime = Math.min(...CAPY_BOT_FINISH_TIMES);
-
     if (winnerLane.isPlayer && playerLane && playerLane.finishTimeSec != null) {
-      // Stern-Berechnung: nur wenn du alle Bots schlägst
+      // ⭐ Sterne werden jetzt gegen die tatsächliche Bestzeit der Bots aus DIESEM Lauf berechnet
+      const finishedBots = bots.filter((b) => b.finishTimeSec != null);
+      const bestBotTime =
+        finishedBots.length > 0
+          ? Math.min(...finishedBots.map((b) => b.finishTimeSec))
+          : Math.min(...CAPY_BOT_FINISH_TIMES);
+
       const runLevel = determineStarFromTimes(
         playerLane.finishTimeSec,
-        bestBotBaseTime
+        bestBotTime
       );
       let unlockedText = "";
 
       if (runLevel) {
-        const prev = bestStarLevel;
-        const newRank = starRank(runLevel);
-        const prevRank = starRank(prev);
+        // Nie einen schlechteren Stern melden als den bereits besten
+        let finalLevel = runLevel;
 
-        if (!prev || newRank > prevRank) {
+        if (bestStarLevel && starRank(bestStarLevel) > starRank(runLevel)) {
+          finalLevel = bestStarLevel;
+        } else {
           bestStarLevel = runLevel;
           saveBestStar(runLevel);
           renderBestStar();
-          try {
-            onWin({ level: runLevel, label: starLabel(runLevel) });
-          } catch (e) {
-            console.error("onWin callback error", e);
-          }
         }
 
-        unlockedText = ` – ${starLabel(runLevel)}`;
+        unlockedText = ` – ${starLabel(finalLevel)}`;
+
+        try {
+          onWin({ level: finalLevel, label: starLabel(finalLevel) });
+        } catch (e) {
+          console.error("onWin callback error", e);
+        }
       }
 
-      const diff = bestBotBaseTime - playerLane.finishTimeSec;
+      const diff = bestBotTime - playerLane.finishTimeSec;
       const diffText =
         diff > 0
           ? `(${diff.toFixed(2).replace(".", ",")}s schneller als der beste Bot)`
@@ -437,7 +441,7 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
         `Deine Zeit: <strong>${playerLane.finishTimeSec
           .toFixed(2)
           .replace(".", ",")}s</strong> ${diffText}<br>` +
-        `Referenz-Bot (schnellster): <strong>${bestBotBaseTime
+        `Schnellster Bot (dieses Rennen): <strong>${bestBotTime
           .toFixed(2)
           .replace(".", ",")}s</strong>${unlockedText || ""}`;
     } else {
@@ -445,9 +449,15 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       const fastestBot = bots.reduce(
         (best, cur) => {
           if (!best) return cur;
-          return (cur.baseFinishTimeSec || Infinity) < (best.baseFinishTimeSec || Infinity)
-            ? cur
-            : best;
+          const bestTime =
+            best.finishTimeSec != null
+              ? best.finishTimeSec
+              : best.baseFinishTimeSec;
+          const curTime =
+            cur.finishTimeSec != null
+              ? cur.finishTimeSec
+              : cur.baseFinishTimeSec;
+          return curTime < bestTime ? cur : best;
         },
         null
       );
@@ -562,14 +572,13 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     lastFrameTime = timestamp;
     const elapsedSec = (timestamp - raceStartTime) / 1000;
 
-    let winnerLane = null;
-
     const finishRect = finishLine.getBoundingClientRect();
     const finishX = finishRect.left + finishRect.width / 2;
 
+    // Bewegung & Zielerkennung
     lanes.forEach((lane) => {
       if (lane.finished) {
-        // bereits fertige Läufer einfach an ihrer letzten Position lassen
+        // bereits fertige Läufer bleiben an ihrer Position
         applyRunnerPosition(lane);
         return;
       }
@@ -597,13 +606,46 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
         lane.finished = true;
         lane.finishTimeSec = elapsedSec;
         lane.progress = Math.min(1, lane.progress);
-        if (!winnerLane) winnerLane = lane;
       }
     });
 
-    if (winnerLane) {
-      finishRace(winnerLane);
+    const playerLane = lanes.find((l) => l.isPlayer);
+    const bots = lanes.filter((l) => !l.isPlayer);
+
+    if (!playerLane) {
+      // sollte nie passieren, aber safety
+      raceFinished = true;
       return;
+    }
+
+    // 1. Wenn der Spieler NICHT im Ziel ist, aber ein Bot schon:
+    //    → Bot gewinnt sofort, Rennen vorbei.
+    if (!playerLane.finished) {
+      const firstFinishedBot = bots.find((b) => b.finished);
+      if (firstFinishedBot) {
+        finishRace(firstFinishedBot);
+        return;
+      }
+    } else {
+      // 2. Spieler ist im Ziel: erst prüfen, ob ein Bot evtl. früher im Ziel war
+      const finishedBots = bots.filter((b) => b.finishTimeSec != null);
+      if (finishedBots.length > 0) {
+        const fastestBot = finishedBots.reduce((best, cur) =>
+          cur.finishTimeSec < best.finishTimeSec ? cur : best
+        );
+        if (fastestBot.finishTimeSec < playerLane.finishTimeSec) {
+          // Safety: falls ein Bot doch früher war → Spieler verliert
+          finishRace(fastestBot);
+          return;
+        }
+      }
+
+      // 3. Spieler ist vorne, aber wir warten, bis ALLE Bots im Ziel sind
+      const allBotsFinished = bots.every((b) => b.finished);
+      if (allBotsFinished) {
+        finishRace(playerLane);
+        return;
+      }
     }
 
     raf = requestAnimationFrame(tick);
