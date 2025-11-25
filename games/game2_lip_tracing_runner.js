@@ -1,8 +1,11 @@
 // Spiel 2: Lippenpflege-Tracing – Runner im Mario-Party-Stil
-// Fix für Accuracy-Bug:
-// - Entfernung wird jetzt zur echten gezeichneten Spur im Screen berechnet (Nearest-Point-Suche)
-// - Mindest-Accuracy auf 90% gesetzt (statt 95%)
-// - etwas großzügigere Toleranz
+// Verbesserungen:
+// - Entfernung wird zur echten gezeichneten Spur im Screen berechnet (Nearest-Point-Suche)
+// - Mindest-Accuracy zum Bestehen auf 90% gesetzt
+// - Sternelogik nach gerundetem Prozentwert: 90/92/96/99% (Braun/Silber/Gold/Rot)
+// - Highscore (bester Stern) wird in localStorage gespeichert und niemals heruntergestuft
+// - Anzeige & Logik für Accuracy sind konsistent (beide nutzen den gerundeten Prozentwert)
+// - Space nach einem Run startet sauber neu vom Start
 
 window.AdventGames = window.AdventGames || {};
 
@@ -10,14 +13,64 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
-  const REQUIRED_ACCURACY = 0.98;  // mindestens 96%
+  // Mindest-Accuracy zum Bestehen
+  const REQUIRED_ACCURACY = 0.90; // 90%
+  const REQUIRED_PERCENT = 90;
+
   const TRACK_LENGTH = 3000;
   const TRACK_DURATION = 22;
   const START_WORLD_X = 80;
   const FINISH_WORLD_X = TRACK_LENGTH - 120;
 
   const BRUSH_RADIUS = 10;
-  const MAX_DEVIATION = 70;        // etwas großzügiger
+  const MAX_DEVIATION = 70;
+
+  const STORAGE_KEY = "advent_lip_tracing_best_star";
+
+  const STAR_ORDER = ["brown", "silver", "gold", "red"];
+
+  function starRank(level) {
+    const idx = STAR_ORDER.indexOf(level);
+    return idx === -1 ? 0 : idx + 1;
+  }
+
+  function starLabelForLevel(level) {
+    switch (level) {
+      case "red":
+        return "Roter Stern";
+      case "gold":
+        return "Goldener Stern";
+      case "silver":
+        return "Silberner Stern";
+      case "brown":
+        return "Brauner Stern";
+      default:
+        return "Stern";
+    }
+  }
+
+  function loadBestStar() {
+    try {
+      const v = window.localStorage.getItem(STORAGE_KEY);
+      return v || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveBestStar(level) {
+    if (!level) return;
+    try {
+      const prev = loadBestStar();
+      if (!prev || starRank(level) > starRank(prev)) {
+        window.localStorage.setItem(STORAGE_KEY, level);
+      }
+    } catch (e) {
+      // localStorage kann blockiert sein – dann einfach still ignorieren
+    }
+  }
+
+  let bestStarLevel = loadBestStar();
 
   let canvas, ctx;
   let width = 600;
@@ -52,6 +105,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   let sumAccuracy = 0;
   let accuracySamples = 0;
+  let currentAvgAcc = 0; // für Anzeige & Endauswertung
   const trailPoints = [];
 
   const snowBG = Array.from({ length: 35 }, () => ({
@@ -71,7 +125,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   try {
     drawSound = new Audio("assets/audio/draw_sound.wav");
     drawSound.loop = true;
-    drawSound.volume = 1.8;
+    drawSound.volume = 0.6;
   } catch (e) {
     console.warn("Konnte Zeichnen-Sound nicht laden", e);
   }
@@ -96,6 +150,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     }
   }
 
+  // --- UI-Grundgerüst ---
 
   container.innerHTML = "";
 
@@ -107,7 +162,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   const title = document.createElement("div");
   title.className = "trace-title";
-  title.textContent = "Lippenbalsam-Challenge: Zeichne die Spur sauber nach, bevor du dein Geschenk öffnen darfst.";
+  title.textContent =
+    "Lippenbalsam-Challenge: Zeichne die Spur sauber nach, bevor du dein Geschenk öffnen darfst.";
 
   const stats = document.createElement("div");
   stats.className = "trace-stats";
@@ -116,7 +172,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   const accuracySpan = document.createElement("span");
 
   timeSpan.innerHTML = `Zeit: <span class="trace-stat-em" id="traceTime">0.0s</span>`;
-  accuracySpan.innerHTML = `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. 98%)`;
+  accuracySpan.innerHTML =
+    `Genauigkeit: <span class="trace-stat-em" id="traceAccuracy">0%</span> (mind. ${REQUIRED_PERCENT}%)`;
 
   stats.appendChild(timeSpan);
   stats.appendChild(accuracySpan);
@@ -154,6 +211,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       <li><strong>Pfeile ← / →</strong>: Stärkeres seitliches Nachjustieren.</li>
       <li>Der Screen scrollt nach rechts und schiebt dich an der linken Kante mit – bis du die <strong>Ziellinie</strong> berührst.</li>
     </ul>
+    <p class="trace-help-title">Ziel</p>
+    <p>Halte so genau wie möglich die Spur – ab 90% Genauigkeit gilt die Challenge als bestanden und du bekommst einen Stern.</p>
   `;
 
   mainRow.appendChild(canvasWrapper);
@@ -223,6 +282,23 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     }
 
     return { sx: bestSX, sy: bestSY, dist2: bestDist2 };
+  }
+
+  // Accuracy → Sternelogik, basierend auf GERUNDETEM Prozentwert
+  function determineAccuracyReward(accPercent) {
+    if (accPercent >= 99) {
+      return { level: "red", label: "Roter Stern" };
+    }
+    if (accPercent >= 96) {
+      return { level: "gold", label: "Goldener Stern" };
+    }
+    if (accPercent >= 92) {
+      return { level: "silver", label: "Silberner Stern" };
+    }
+    if (accPercent >= 90) {
+      return { level: "brown", label: "Brauner Stern" };
+    }
+    return null;
   }
 
   // --- Zeichenfunktionen ---
@@ -424,7 +500,6 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   function drawPen() {
     ctx.save();
 
-    // Glow direkt an der Stiftspitze (dort, wo wirklich gezeichnet wird)
     ctx.beginPath();
     ctx.arc(penX, penY, BRUSH_RADIUS + 4, 0, Math.PI * 2);
     const glowGrad = ctx.createRadialGradient(penX, penY, 0, penX, penY, BRUSH_RADIUS + 4);
@@ -433,11 +508,9 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = glowGrad;
     ctx.fill();
 
-    // Stiftkörper so verschieben, dass die Spitze exakt auf penX/penY liegt
     const angle = -Math.PI / 12;
-    const nibOffset = 26; // Abstand von Stiftmitte zur Spitze in den lokalen Koordinaten
+    const nibOffset = 26;
 
-    // Weltkoordinaten des Stiftkörpers berechnen, so dass die Spitze bei (penX, penY) sitzt
     const offsetX = Math.cos(angle) * nibOffset;
     const offsetY = Math.sin(angle) * nibOffset;
     const bodyCenterX = penX + offsetX;
@@ -446,7 +519,6 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.translate(bodyCenterX, bodyCenterY);
     ctx.rotate(angle);
 
-    // Stiftkörper
     ctx.beginPath();
     if (ctx.roundRect) {
       ctx.roundRect(-18, -6, 36, 12, 6);
@@ -460,7 +532,6 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = bodyGrad;
     ctx.fill();
 
-    // Kappe
     ctx.beginPath();
     if (ctx.roundRect) {
       ctx.roundRect(10, -7, 10, 14, 4);
@@ -470,7 +541,6 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.fillStyle = "#fefefe";
     ctx.fill();
 
-    // Spitze
     ctx.beginPath();
     ctx.moveTo(-18, -4);
     ctx.lineTo(-26, 0);
@@ -501,7 +571,12 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     ctx.font = "bold 64px Marcellus, serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const grd = ctx.createLinearGradient(width / 2 - 80, height / 2 - 40, width / 2 + 80, height / 2 + 40);
+    const grd = ctx.createLinearGradient(
+      width / 2 - 80,
+      height / 2 - 40,
+      width / 2 + 80,
+      height / 2 + 40
+    );
     grd.addColorStop(0, "#ffe5ec");
     grd.addColorStop(0.5, "#ffb3c1");
     grd.addColorStop(1, "#ffe5ec");
@@ -519,9 +594,10 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   function updateAccuracyDisplay() {
     const accEl = root.querySelector("#traceAccuracy");
-    const acc = accuracySamples > 0 ? (sumAccuracy / accuracySamples) * 100 : 0;
+    const accPercent =
+      accuracySamples > 0 ? Math.round(currentAvgAcc * 100) : 0;
     if (accEl) {
-      accEl.textContent = Math.round(acc) + "%";
+      accEl.textContent = accPercent + "%";
     }
   }
 
@@ -540,6 +616,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   function gameLoop(timestamp) {
     if (!isRunning && !isCountingDown) return;
 
+    // Countdown-Phase
     if (isCountingDown) {
       if (!countdownStartMs) countdownStartMs = timestamp;
       const dt = (timestamp - countdownStartMs) / 1000;
@@ -555,6 +632,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       return;
     }
 
+    // Lauf-Phase
     if (!lastFrameMs) lastFrameMs = timestamp;
     const dt = (timestamp - lastFrameMs) / 1000;
     lastFrameMs = timestamp;
@@ -588,13 +666,12 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     penY += vy * dt;
 
     const marginX = 20;
-    const marginY = 30;
+    const marginY = 20;
     if (penX < marginX) penX = marginX;
     if (penX > width - marginX) penX = width - marginX;
     if (penY < marginY) penY = marginY;
     if (penY > height - marginY) penY = height - marginY;
 
-    // NEUER Accuracy-Ansatz: nächster Punkt auf der gezeichneten Spur
     const nearest = findNearestOnTrack(penX, penY);
     const dist = Math.sqrt(nearest.dist2);
     const effectiveDist = Math.max(0, dist - BRUSH_RADIUS);
@@ -602,6 +679,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
     sumAccuracy += frameAcc;
     accuracySamples++;
+    currentAvgAcc = sumAccuracy / accuracySamples;
     updateAccuracyDisplay();
 
     const worldPenX = cameraX + penX;
@@ -624,7 +702,14 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   // --- Start / Finish / Reset ---
 
   function startCountdown() {
-    if (isRunning || isFinished || isCountingDown) return;
+    if (isRunning || isCountingDown) return;
+
+    // Wenn der letzte Run bereits beendet war, komplett neu starten,
+    // damit Space wie angekündigt "neu starten" kann.
+    if (isFinished) {
+      resetGame();
+    }
+
     isCountingDown = true;
     countdownStartMs = null;
     const statusLineEl = root.querySelector(".trace-status-line");
@@ -644,6 +729,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     lastFrameMs = timestamp;
     sumAccuracy = 0;
     accuracySamples = 0;
+    currentAvgAcc = 0;
     elapsed = 0;
     trailPoints.length = 0;
     const worldPenX = cameraX + penX;
@@ -652,7 +738,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     updateAccuracyDisplay();
     const statusLineEl = root.querySelector(".trace-status-line");
     if (statusLineEl) {
-      statusLineEl.textContent = "Go! Der Bildschirm schiebt dich – halte den Lippenbalsam auf der Spur.";
+      statusLineEl.textContent =
+        "Go! Der Bildschirm schiebt dich – halte den Lippenbalsam auf der Spur.";
       statusLineEl.classList.remove("trace-status-success", "trace-status-fail");
     }
     if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
@@ -678,27 +765,43 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
       updateTime(elapsed);
     }
 
-    const avgAcc = accuracySamples > 0 ? sumAccuracy / accuracySamples : 0;
+    const avgAcc = accuracySamples > 0 ? currentAvgAcc : 0;
     const accPercent = Math.round(avgAcc * 100);
-    const success = avgAcc >= REQUIRED_ACCURACY;
+
+    const reward = determineAccuracyReward(accPercent);
+    const success = accPercent >= REQUIRED_PERCENT && reward !== null;
     const statusLineEl = root.querySelector(".trace-status-line");
 
     if (success) {
+      // Highscore-Logik: niemals "herunterstufen"
+      let finalLevel = reward.level;
+      if (bestStarLevel && starRank(bestStarLevel) > starRank(reward.level)) {
+        finalLevel = bestStarLevel;
+      } else {
+        bestStarLevel = reward.level;
+      }
+      saveBestStar(bestStarLevel);
+
+      const finalReward = {
+        level: finalLevel,
+        label: starLabelForLevel(finalLevel)
+      };
+
       if (statusLineEl) {
         statusLineEl.textContent =
-          `Stark! Du hast mit ${accPercent}% Genauigkeit eingecremt – die Lippenbalsam-Challenge ist bestanden. ✨`;
+          `Stark! Du hast mit ${accPercent}% Genauigkeit eingecremt – ${finalReward.label}, die Lippenbalsam-Challenge ist bestanden. ✨`;
         statusLineEl.classList.add("trace-status-success");
         statusLineEl.classList.remove("trace-status-fail");
       }
       try {
-        onWin({ level: "brown", label: "Brauner Stern" });
+        onWin(finalReward);
       } catch (e) {
         console.error("onWin callback error:", e);
       }
     } else {
       if (statusLineEl) {
         statusLineEl.textContent =
-          `Deine Genauigkeit lag bei ${accPercent}%. Versuch, noch genauer der krickeligen Spur zu folgen und starte neu mit der Leertaste.`;
+          `Deine Genauigkeit lag bei ${accPercent}%. Für den Stern brauchst du mindestens ${REQUIRED_PERCENT}%. Versuch, noch genauer der krickeligen Spur zu folgen und starte neu mit der Leertaste.`;
         statusLineEl.classList.add("trace-status-fail");
         statusLineEl.classList.remove("trace-status-success");
       }
@@ -720,6 +823,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     elapsed = 0;
     sumAccuracy = 0;
     accuracySamples = 0;
+    currentAvgAcc = 0;
     vx = 0;
     vy = 0;
     cameraX = 0;
@@ -735,7 +839,8 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
     const statusLineEl = root.querySelector(".trace-status-line");
     if (statusLineEl) {
-      statusLineEl.textContent = "Neu gestartet. Drücke die Leertaste, um den Countdown zu beginnen.";
+      statusLineEl.textContent =
+        "Neu gestartet. Drücke die Leertaste, um den Countdown zu beginnen.";
       statusLineEl.classList.remove("trace-status-success", "trace-status-fail");
     }
     drawFrame();
@@ -773,6 +878,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   window.addEventListener("keyup", handleKeyUp);
   window.addEventListener("resize", resizeCanvas);
 
+  // Initiales Setup
   resizeCanvas();
 
   return {

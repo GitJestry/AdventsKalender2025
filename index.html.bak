@@ -5,15 +5,6 @@
   <title>Adventskalender</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Game-specific styles -->
-  <link rel="stylesheet" href="games/game1_warmflaschen.css" />
-  <link rel="stylesheet" href="games/game2_lip_tracing_runner.css" />
-  <link rel="stylesheet" href="games/game3_fast_hands_reaction.css" />
-  <link rel="stylesheet" href="games/game4_juli_reading.css" />
-  <link rel="stylesheet" href="games/game5_maiswaffel_shooting.css" />
-  <link rel="stylesheet" href="games/game6_capybara_sprint.css" />
-  <link rel="stylesheet" href="games/game7_wire_runner.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Marcellus&display=swap" rel="stylesheet">

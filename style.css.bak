@@ -1259,6 +1259,840 @@ main {
   min-height: 360px;
 }
 
+/* Wärmflaschen-Spiel */
+
+/* =========================================================
+   Wärmflaschen-Spiel – neues Flaschen- & Flüssigkeits-Design
+   ========================================================= */
+
+/* Grid für die Wärmflaschen */
+.warm-game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(70px, 90px));
+  gap: 18px 24px;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+/* Grund-Container der Flasche */
+.warm-game .flask {
+  position: relative;
+  width: 80px;
+  height: 185px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--transition-med),
+    box-shadow var(--transition-med);
+}
+
+/* Glas-/Gummi-Körper der Wärmflasche */
+.warm-game .flask-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 38px 38px 22px 22px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.45), transparent 60%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.22), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.75));
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+  overflow: hidden;
+}
+
+/* Hals / Öffnung oben */
+.warm-game .flask-shell::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 16px;
+  border-radius: 12px 12px 6px 6px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-bottom: none;
+  background:
+    radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.7), transparent 55%),
+    rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.65);
+}
+
+/* innerer Rand – gibt dem “Glas” Tiefe */
+.warm-game .flask-shell::after {
+  content: "";
+  position: absolute;
+  inset: 5px 6px 7px;
+  border-radius: 32px 32px 18px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.18), transparent 55%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Flüssigkeit im Inneren – Höhe & Farbe kommen aus JS */
+.warm-game .flask-liquid {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 7px;
+  /* Höhe wird per JS gesetzt (height: xx%) */
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  border-radius: 26px 26px 14px 14px;
+  transform-origin: bottom center;
+  transition: height 200ms ease-out;
+  overflow: hidden;
+}
+
+/* Glitzer & leichte Bewegung im Wasser */
+.warm-game .flask-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.38) 0, transparent 26%),
+    radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.28) 0, transparent 24%),
+    radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.20) 0, transparent 26%);
+  mix-blend-mode: screen;
+  opacity: 0.52;
+  pointer-events: none;
+  animation: warm-glitter-waves 2.8s ease-in-out infinite;
+}
+
+/* runde Wasseroberfläche (Meniskus) */
+.warm-game .flask-liquid::after {
+  content: "";
+  position: absolute;
+  left: -15%;
+  right: -15%;
+  top: 0;
+  height: 14px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 0%,
+      rgba(255, 255, 255, 0.8) 0,
+      rgba(255, 255, 255, 0.25) 35%,
+      transparent 70%);
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* dezente Wellen im Glitzer */
+@keyframes warm-glitter-waves {
+  0% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translateY(-2px);
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+}
+
+/* Auswahl-Feedback */
+.warm-game .flask.selected .flask-shell {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 18px 32px rgba(0, 0, 0, 0.9);
+  transform: translateY(-3px);
+}
+
+/* Gieß-Animation – Flasche kippt leicht */
+.warm-game .flask.pour-from .flask-shell {
+  transform: translateY(-6px) rotate(-4deg);
+}
+
+.warm-game .flask.pour-to .flask-shell {
+  transform: translateY(-4px) rotate(3deg);
+}
+
+/* Flüssigkeit bewegt sich mit */
+.warm-game .flask.pour-from .flask-liquid {
+  transform: translateX(-4px) rotate(-3deg);
+}
+
+.warm-game .flask.pour-to .flask-liquid {
+  transform: translateX(3px) rotate(2deg);
+}
+
+/* Hover – minimal schweben lassen */
+.warm-game .flask:hover .flask-shell {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.warm-game-status {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+}
+
+.warm-game-status.win {
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+
+/* Lippenpflege-Tracing Runner */
+
+.trace-game {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.trace-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.trace-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.trace-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.trace-stat-em {
+  color: var(--accent-soft);
+}
+
+.trace-buttons {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.trace-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.trace-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.trace-main {
+  display: flex;
+  gap: 0.8rem;
+  align-items: stretch;
+  margin-top: 0.1rem;
+}
+
+.trace-canvas-wrapper {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 65%),
+    rgba(0, 0, 0, 0.6);
+  flex: 1 1 auto;
+}
+
+.trace-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.trace-help {
+  width: 190px;
+  flex: 0 0 190px;
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.5rem 0.6rem;
+  line-height: 1.45;
+}
+
+.trace-help-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin: 0 0 0.25rem;
+  color: var(--accent-soft);
+}
+
+.trace-help ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.trace-help li {
+  margin: 0.1rem 0;
+}
+
+.trace-instruction {
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+}
+
+.trace-status-line {
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+}
+
+.trace-status-success {
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+
+.trace-status-fail {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* FOOTER */
+
+.page-footer {
+  width: 100%;
+  max-width: 1100px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.page-footer p {
+  margin: 0;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 720px) {
+  body {
+    padding: 0.9rem;
+  }
+
+  .audio-toggle {
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .calendar-section {
+    padding: 1.1rem 0.8rem 1rem;
+  }
+
+  .game-window {
+    padding: 1.1rem 0.9rem 0.9rem;
+  }
+
+  .game-layout {
+    gap: 0.75rem;
+  }
+
+  .game-close {
+    top: 0.4rem;
+    right: 0.6rem;
+  }
+
+  .warm-game-grid {
+    gap: 0.7rem;
+  }
+
+  .trace-main {
+    flex-direction: column;
+  }
+
+  .trace-help {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+
+.game-title-block {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.game-area-inner {
+  position: relative;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Shared star emblem styling */
+.star-emblem {
+  --emblem-primary: var(--badge-primary, var(--status-primary));
+  --emblem-secondary: var(--badge-secondary, var(--status-secondary));
+  --emblem-glow: var(--badge-glow, var(--status-glow, rgba(247, 211, 92, 0.5)));
+  --emblem-size: 7.44rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--emblem-size);
+  height: var(--emblem-size);
+  color: transparent;
+}
+
+.star-emblem::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  background: linear-gradient(145deg, var(--emblem-primary), var(--emblem-secondary));
+  clip-path: polygon(50% 0%, 63% 34%, 98% 35%, 70% 57%, 80% 92%, 50% 72%, 20% 92%, 30% 57%, 2% 35%, 37% 34%);
+  filter:
+    drop-shadow(0 0 10px rgba(0, 0, 0, 0.34)) drop-shadow(0 0 18px var(--emblem-glow));
+  border-radius: 12px;
+}
+
+.star-emblem::after {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.48), transparent 40%),
+    radial-gradient(circle at 70% 72%, rgba(255, 255, 255, 0.32), transparent 55%),
+    radial-gradient(circle, rgba(255, 248, 225, 0.22) 0 38%, transparent 72%);
+  mix-blend-mode: screen;
+  filter: blur(1px) drop-shadow(0 0 16px var(--emblem-glow));
+  opacity: 0.95;
+  clip-path: polygon(50% 0%, 63% 34%, 98% 35%, 70% 57%, 80% 92%, 50% 72%, 20% 92%, 30% 57%, 2% 35%, 37% 34%);
+}
+
+.game-star-badge {
+  --badge-primary: var(--star-brown);
+  --badge-secondary: var(--star-brown-dark);
+  --badge-glow: rgba(197, 139, 91, 0.45);
+  --badge-outer: rgba(197, 139, 91, 0.28);
+  --badge-sparkle: rgba(255, 237, 214, 0.55);
+  position: absolute;
+  top: -3rem;
+  left: -3rem;
+  width: 8.05rem;
+  height: 8.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: rotate(-10deg);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.game-star-badge.hidden {
+  display: none;
+}
+
+.game-star-icon {
+  --emblem-size: 7.85rem;
+  --emblem-primary: var(--badge-primary);
+  --emblem-secondary: var(--badge-secondary);
+  --emblem-glow: var(--badge-glow);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22)) drop-shadow(0 0 24px var(--badge-outer));
+  z-index: 1;
+  animation: none;
+}
+
+.game-star-icon::before,
+.game-star-icon::after {
+  content: "";
+}
+
+.game-star-icon::before {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 24% 26%, rgba(255, 255, 255, 0.28), transparent 40%),
+    radial-gradient(circle at 78% 74%, rgba(255, 255, 255, 0.18), transparent 55%),
+    radial-gradient(circle, var(--badge-outer) 0 40%, transparent 72%);
+  filter: blur(2px);
+}
+
+.game-star-icon .star-emblem,
+.game-star-icon .star-emblem::before,
+.game-star-icon .star-emblem::after {
+  animation: none;
+}
+
+.game-star-icon .star-emblem {
+  width: 100%;
+  height: 100%;
+}
+
+.game-star-icon::after {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 60%);
+  mix-blend-mode: screen;
+  filter: blur(3px);
+  opacity: 0.85;
+}
+
+.game-star-badge.star-level-brown {
+  --badge-primary: var(--star-brown);
+  --badge-secondary: var(--star-brown-dark);
+  --badge-glow: rgba(197, 139, 91, 0.45);
+  --badge-outer: rgba(197, 139, 91, 0.32);
+  --badge-sparkle: rgba(255, 237, 214, 0.6);
+}
+
+.game-star-badge.star-level-silver {
+  --badge-primary: var(--star-silver);
+  --badge-secondary: var(--star-silver-dark);
+  --badge-glow: rgba(223, 230, 239, 0.55);
+  --badge-outer: rgba(223, 230, 239, 0.38);
+  --badge-sparkle: rgba(255, 255, 255, 0.8);
+  box-shadow: none;
+}
+
+.game-star-badge.star-level-gold {
+  --badge-primary: var(--star-gold);
+  --badge-secondary: var(--star-gold-dark);
+  --badge-glow: rgba(247, 211, 92, 0.65);
+  --badge-outer: rgba(247, 211, 92, 0.45);
+  --badge-sparkle: rgba(255, 241, 196, 0.9);
+  transform: rotate(-8deg);
+  box-shadow: none;
+  animation: none;
+}
+
+.game-star-badge.star-level-red {
+  --badge-primary: var(--star-red);
+  --badge-secondary: var(--star-red-dark);
+  --badge-glow: rgba(255, 127, 127, 0.72);
+  --badge-outer: rgba(255, 127, 127, 0.52);
+  --badge-sparkle: rgba(255, 214, 214, 0.95);
+  transform: rotate(-8deg);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes starBadgePulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    text-shadow:
+      0 0 10px var(--badge-sparkle),
+      0 0 22px rgba(0, 0, 0, 0.38);
+  }
+
+  50% {
+    transform: scale(1.04);
+    text-shadow:
+      0 0 18px var(--badge-sparkle),
+      0 0 28px rgba(0, 0, 0, 0.44);
+  }
+}
+
+@keyframes starBadgeHover {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-10deg) scale(1.06);
+  }
+
+  50% {
+    transform: translateY(-4px) rotate(-8deg) scale(1.09);
+  }
+}
+
+@keyframes starBadgeSparkle {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: rotate(12deg) scale(1.05);
+  }
+}
+
+.game-win-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 60%),
+    rgba(0, 0, 0, 0.78);
+  color: var(--text-main);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.game-win-overlay-inner p {
+  margin: 0;
+}
+
+.game-win-overlay-inner small {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--accent-soft);
+}
+
+.game-win-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+
+@keyframes starfieldSweep {
+  0% {
+    transform: rotate(0deg) scale(1.02);
+    opacity: 0.28;
+  }
+
+  50% {
+    transform: rotate(14deg) scale(1.08);
+    opacity: 0.52;
+  }
+
+  100% {
+    transform: rotate(32deg) scale(1.02);
+    opacity: 0.28;
+  }
+}
+
+@keyframes starFloat {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+  }
+
+  50% {
+    transform: translate(calc(-50% + 0.8%), calc(-50% - 0.6%)) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 1.02));
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+  }
+}
+
+@keyframes starTwinkle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(0.0);
+    /* unsichtbar klein */
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.7));
+    /* wächst rein */
+  }
+
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(var(--star-scale));
+    /* voller Glow */
+  }
+
+  70% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(calc(var(--star-scale) * 0.4));
+    /* wird wieder kleiner */
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--star-tilt)) scale(0.0);
+    /* komplett weg! */
+  }
+}
+
+
+
+/* Schnelle Hände – Reaktionsspiel */
+
+.reaction-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.reaction-blob-wrap {
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reaction-blob {
+  width: 120px;
+  height: 120px;
+  border-radius: 60% 45% 50% 75%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.9) 0, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(145deg, #ffb8dd, #ffc58f);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transform: scale(0.4) translateY(24px);
+  pointer-events: none;
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+.reaction-blob.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  animation: reactionBlobPop 320ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes reactionBlobPop {
+  0% {
+    transform: scale(0.3) translateY(30px);
+  }
+
+  55% {
+    transform: scale(1.08) translateY(-6px);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.reaction-last-line {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.reaction-time-value {
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.reaction-time-good {
+  color: #4fff88;
+}
+
+.reaction-time-bad {
+  color: #ff6b6b;
+}
+
+.reaction-time-neutral {
+  color: var(--text-muted);
+}
+
+/* Juli Lese-Challenge */
+.reading-challenge {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+  background: linear-gradient(120deg, rgba(255, 237, 224, 0.8), rgba(232, 245, 255, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 1.6rem;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.12);
+}
+
+.reading-challenge__message {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2f2a3a;
+}
+
+.reading-challenge__button {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+  color: #2f2a3a;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.18);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.reading-challenge__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+}
+
+.reading-challenge__button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+.reading-challenge__button:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.reading-challenge--completed {
+  border-color: rgba(116, 235, 213, 0.8);
+  box-shadow: 0 20px 32px rgba(79, 255, 136, 0.18);
+}
+
 /* Hinweis-Effekt am Türknopf für verfügbare, noch geschlossene Türen */
 .door.available:not(.open):not(.completed) .door-knob {
   cursor: grab;
@@ -1337,3 +2171,153 @@ main {
   }
 }
 
+/* Spiel 7: Golden Wire Runner */
+.wire-runner {
+  background: rgba(12, 26, 33, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  margin-top: 1rem;
+}
+
+.wire-runner__header {
+  margin-bottom: 0.8rem;
+}
+
+.wire-runner__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffe8a8;
+}
+
+.wire-runner__subtitle {
+  margin-top: 0.2rem;
+  color: #dce8ee;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.wire-runner__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.wire-runner__btn {
+  background: linear-gradient(180deg, #16384a 0%, #0f2837 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: #f5f8ff;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.wire-runner__btn--primary {
+  background: linear-gradient(180deg, #ffd87a 0%, #f7a93c 100%);
+  color: #1f2a2f;
+  border-color: rgba(255, 230, 180, 0.8);
+  box-shadow: 0 10px 26px rgba(247, 188, 84, 0.35);
+}
+
+.wire-runner__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.wire-runner__status {
+  color: #cde8ff;
+  font-size: 0.92rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.wire-runner__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  color: #f7f1dc;
+}
+
+.wire-runner__stats span strong {
+  color: #ffe38a;
+}
+
+.wire-runner__layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.wire-runner__canvas-wrapper {
+  position: relative;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 227, 170, 0.05), transparent 50%),
+    linear-gradient(180deg, #0b131d 0%, #0c1823 70%, #11212c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 14px 26px rgba(0, 0, 0, 0.35);
+}
+
+.wire-runner__canvas {
+  width: 100%;
+  height: 320px;
+  display: block;
+}
+
+.wire-runner__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #ffe9b5;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(180deg, rgba(7, 17, 30, 0.55), rgba(12, 28, 41, 0.55));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.wire-runner__overlay--show {
+  opacity: 1;
+}
+
+.wire-runner__help {
+  background: rgba(14, 32, 37, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  color: #d8e9f3;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.wire-runner__help-title {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  color: #ffe8a8;
+}
+
+.wire-runner__help ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .wire-runner__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wire-runner__help {
+    order: -1;
+  }
+}

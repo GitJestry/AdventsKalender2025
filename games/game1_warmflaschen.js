@@ -4,9 +4,66 @@ window.AdventGames = window.AdventGames || {};
 
 window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(container, options) {
   const CAPACITY = 6;
-  const COLORS = ["RED", "GREEN", "BLUE", "GOLD"];
-  // Klassisches Setup: eine Flasche pro Farbe + 2 leere Flaschen
-  const BOTTLES_COUNT = COLORS.length + 2;
+  const COLORS = ["RED", "GREEN", "BLUE", "GOLD", "PURPLE", "ORANGE"];
+
+    // Neue Farbzuordnung für Verläufe
+ const COLOR_MAP = {
+  RED: "#ff7082",
+  GREEN: "#6fe0a3",
+  BLUE: "#6ec5ff",
+  GOLD: "#ffd873",
+  PURPLE: "#c89aff",
+  ORANGE: "#ffb36b"
+};
+
+  // Fix: Immer 8 Flaschen (4 Farbflaschen + 4 leer als Puffer)
+  const BOTTLES_COUNT = 8;
+
+  // Highscore / Stern-Progress (nie verschlechtern)
+  const STORAGE_KEY = "advent_warmflaschen_best_star";
+  const STAR_ORDER = ["brown", "silver", "gold", "red"];
+
+  function starRank(level) {
+    const idx = STAR_ORDER.indexOf(level);
+    return idx === -1 ? 0 : idx + 1;
+  }
+
+  function starLabelForLevel(level) {
+    switch (level) {
+      case "red":
+        return "Roter Stern";
+      case "gold":
+        return "Goldener Stern";
+      case "silver":
+        return "Silberner Stern";
+      case "brown":
+      default:
+        return "Bronzener Stern";
+    }
+  }
+
+  function loadBestStar() {
+    try {
+      const v = window.localStorage.getItem(STORAGE_KEY);
+      return v || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveBestStar(level) {
+    if (!level) return;
+    try {
+      const prev = loadBestStar();
+      if (!prev || starRank(level) > starRank(prev)) {
+        window.localStorage.setItem(STORAGE_KEY, level);
+      }
+    } catch (e) {
+      // localStorage kann geblockt sein – dann ignorieren wir es einfach
+    }
+  }
+
+  let bestStarLevel = loadBestStar();
 
   let state = null;
   let selectedIndex = null;
@@ -104,6 +161,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     resetGame();
   });
 
+  // --- Initialzustand -------------------------------------------------------
+
   function createInitialState() {
     const units = [];
     COLORS.forEach((color) => {
@@ -115,8 +174,8 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     shuffle(units);
 
     const bottles = Array.from({ length: BOTTLES_COUNT }, () => []);
-    // Wir befüllen nur die Farbflaschen, die letzten 2 bleiben leer
-    const filledBottleCount = Math.min(BOTTLES_COUNT - 2, COLORS.length);
+    // 4 Flaschen werden befüllt (eine pro Farbe), 4 bleiben leer als Puffer
+    const filledBottleCount = Math.min(BOTTLES_COUNT - 2, COLORS.length); // = 4
 
     let bottleIndex = 0;
     while (units.length) {
@@ -167,36 +226,84 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     movesLabel.textContent = `Züge: ${moveCount} (${minLabel})`;
   }
 
-  function render() {
-    grid.innerHTML = "";
-    state.forEach((bottle, index) => {
-      const flask = document.createElement("div");
-      flask.className = "flask";
-      flask.dataset.index = String(index);
-
-      if (selectedIndex === index) {
-        flask.classList.add("selected");
-      }
-
-      for (let i = 0; i < bottle.length; i++) {
-        const color = bottle[i];
-        if (!color) continue;
-
-        const segment = document.createElement("div");
-        segment.className = "flask-segment segment-" + color;
-
-        const inner = document.createElement("div");
-        inner.className = "flask-segment-inner";
-        segment.appendChild(inner);
-
-        flask.appendChild(segment);
-      }
-
-      flask.addEventListener("click", () => handleFlaskClick(index));
-
-      grid.appendChild(flask);
-    });
+  function buildLiquidGradient(bottle) {
+  if (!bottle.length) {
+    return "none";
   }
+
+  const step = 100 / bottle.length;
+  const colorParts = [];
+
+  // bottle[0] = unten, bottle[bottle.length - 1] = oben
+  for (let i = 0; i < bottle.length; i++) {
+    const colorName = bottle[i];
+    const base = COLOR_MAP[colorName] || "#ffffff";
+    const start = i * step;
+    const end = (i + 1) * step;
+
+    // leichte Überlappung, damit keine harten Kanten entstehen
+    const s = Math.max(0, start - 1);
+    const e = Math.min(100, end + 1);
+
+    colorParts.push(`${base} ${s}% ${e}%`);
+  }
+
+  // Untere Abdunklung + eigentlicher Farbverlauf
+  return [
+    "linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 22%)",
+    `linear-gradient(to top, ${colorParts.join(",")})`
+  ].join(",");
+}
+
+
+  // --- Rendering ------------------------------------------------------------
+
+function render() {
+  grid.innerHTML = "";
+
+  state.forEach((bottle, index) => {
+    const flask = document.createElement("div");
+    flask.className = "flask";
+    flask.dataset.index = String(index);
+
+    if (selectedIndex === index) {
+      flask.classList.add("selected");
+    }
+
+    // Äußere Flasche
+    const shell = document.createElement("div");
+    shell.className = "flask-shell";
+
+    // Flüssigkeit
+    const liquid = document.createElement("div");
+    liquid.className = "flask-liquid";
+
+    // Füllstand 0–1
+    const fillRatio = bottle.length / CAPACITY;
+    const clamped = Math.max(0, Math.min(1, fillRatio));
+
+    // Maximaler sichtbarer Füllstand, damit es nicht in den Hals läuft
+    const MAX_VISUAL_FILL = 0.86; // ggf. 0.82/0.80, wenn du noch mehr Rand willst
+    const fillPercent = clamped * MAX_VISUAL_FILL * 100;
+
+    // Höhe der Flüssigkeit
+    liquid.style.height = `${fillPercent}%`;
+    // Farbverlauf (Schichten)
+    liquid.style.backgroundImage = buildLiquidGradient(bottle);
+
+    shell.appendChild(liquid);
+    flask.appendChild(shell);
+
+    // Klick-Handler
+    flask.addEventListener("click", () => handleFlaskClick(index));
+
+    grid.appendChild(flask);
+  });
+}
+
+
+
+  // --- Interaktion ----------------------------------------------------------
 
   function handleFlaskClick(index) {
     if (hasWon || isAnimating) return;
@@ -265,12 +372,29 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
         const won = checkWin();
         if (won && !hasWon) {
           hasWon = true;
-          const reward = determineReward(moveCount);
+
+          // Basis-Stufe in Abhängigkeit von diff
+          const baseReward = determineReward(moveCount);
+
+          // Highscore-Logik: niemals schlechteren Stern anzeigen als bisher
+          let finalLevel = baseReward.level;
+          if (bestStarLevel && starRank(bestStarLevel) > starRank(baseReward.level)) {
+            finalLevel = bestStarLevel;
+          } else {
+            bestStarLevel = baseReward.level;
+          }
+          saveBestStar(bestStarLevel);
+
+          const finalReward = {
+            level: finalLevel,
+            label: starLabelForLevel(finalLevel)
+          };
+
           status.textContent =
-            `Geschafft! Alle Glitzerfarben sind sortiert – jede volle Wärmflasche ist einfarbig. ✨ (${reward.label})`;
+            `Geschafft! Alle Glitzerfarben sind sortiert – jede volle Wärmflasche ist einfarbig. ✨ (${finalReward.label})`;
           status.classList.add("win");
           try {
-            onWin(reward);
+            onWin(finalReward);
           } catch (e) {
             console.error("onWin callback error:", e);
           }
@@ -311,7 +435,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     return moved;
   }
 
-  // Variante B: Nur "voll & einfarbig" zählt (oder leer)
+  // Win-Variante B: Nur "voll & einfarbig" zählt (oder leer)
   function checkWin() {
     return state.every((bottle) => {
       if (bottle.length === 0) return true;
@@ -341,14 +465,23 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     return fallbacks; // diff >= 5 -> Bronze
   }
 
-
   function cloneState(current) {
     return current.map((bottle) => bottle.slice());
   }
 
-  // Berechnung der minimalen Züge mit denselben Regeln wie im Spiel
+  // --- Min-Züge-Berechnung (mit Symmetrie-Reduktion) -----------------------
+
+  // Kanonische Darstellung: Flaschen-Inhalte sortieren, damit permutierte Zustände
+  // als identisch erkannt werden (brutale State-Space-Reduktion).
+  function canonicalKey(curState) {
+    const bottleStrings = curState.map((bottle) => bottle.join(","));
+    bottleStrings.sort();
+    return bottleStrings.join("|");
+  }
+
+  // Berechnung der minimalen Züge mit denselben Spielregeln
   function calculateMinimumMoves(startState) {
-    const startKey = serializeState(startState);
+    const startKey = canonicalKey(startState);
     const seen = new Set([startKey]);
     const queue = [{ state: startState, moves: 0 }];
     let idx = 0;
@@ -368,7 +501,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
           const next = pourState(cur, from, to);
           if (!next) continue;
 
-          const key = serializeState(next);
+          const key = canonicalKey(next);
           if (seen.has(key)) continue;
           seen.add(key);
           queue.push({ state: next, moves: moves + 1 });
@@ -392,7 +525,17 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
       return false;
     }
 
-    // keine Sonderlogik – exakt wie im echten Spiel
+    // Wichtige Optimierung:
+    // Einen bereits VOLLEN, EINFARBIGEN Behälter nicht in eine komplett
+    // leere Flasche kippen – das erzeugt nur symmetrische, nutzlose Zustände.
+    if (
+      toBottle.length === 0 &&
+      fromBottle.length === CAPACITY &&
+      fromBottle.every((c) => c === topColor)
+    ) {
+      return false;
+    }
+
     return true;
   }
 
@@ -424,7 +567,6 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     return curState.map((bottle) => bottle.join(",")).join("|");
   }
 
-  // selbe Gewinnbedingung wie checkWin, nur auf übergebenem State
   function checkStateWin(curState) {
     return curState.every((bottle) => {
       if (bottle.length === 0) return true;
@@ -434,7 +576,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
     });
   }
 
-  // direkt mit einem frischen, schweren Level starten
+  // direkt mit einem frischen Level starten
   resetGame();
 
   return {

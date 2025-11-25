@@ -1,0 +1,109 @@
+/* Schnelle Hände – Reaktionsspiel */
+
+.reaction-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* Bereich für den Klecks */
+.trace-canvas-wrapper.reaction-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 65%),
+    rgba(4, 10, 26, 0.9);
+}
+
+/* Center-Box für den Klecks */
+.reaction-blob-wrap {
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Grundzustand des Klecks */
+.reaction-blob {
+  width: 120px;
+  height: 120px;
+  border-radius: 60% 45% 50% 75%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.9) 0, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(145deg, #ffb8dd, #ffc58f);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transform: scale(0.4) translateY(24px);
+  pointer-events: none;
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+/* sichtbar beim Signal */
+.reaction-blob.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  animation: reactionBlobPop 320ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* kurzer Pop-Effekt beim Erscheinen */
+@keyframes reactionBlobPop {
+  0% {
+    transform: scale(0.3) translateY(30px);
+  }
+
+  55% {
+    transform: scale(1.08) translateY(-6px);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Erfolgs-/Fehler-Highlights */
+.reaction-blob-success {
+  box-shadow:
+    0 0 0 4px rgba(79, 255, 136, 0.85),
+    0 0 22px rgba(79, 255, 136, 0.7),
+    0 18px 32px rgba(0, 0, 0, 0.7);
+}
+
+.reaction-blob-fail {
+  box-shadow:
+    0 0 0 4px rgba(255, 107, 107, 0.9),
+    0 0 22px rgba(255, 107, 107, 0.75),
+    0 18px 32px rgba(0, 0, 0, 0.7);
+}
+
+/* Letzte Reaktion / kleine Anzeige darunter */
+.reaction-last-line {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.reaction-time-value {
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.reaction-time-good {
+  color: #4fff88;
+}
+
+.reaction-time-bad {
+  color: #ff6b6b;
+}
+
+.reaction-time-neutral {
+  color: var(--text-muted);
+}
+
+/* kurzer Hinweis-Text neben der Zeit */
+#reactionNote {
+  margin-left: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.9;
+}

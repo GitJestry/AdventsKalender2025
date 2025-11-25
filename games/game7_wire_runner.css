@@ -1,0 +1,150 @@
+/* Spiel 7: Golden Wire Runner */
+.wire-runner {
+  background: rgba(12, 26, 33, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  margin-top: 1rem;
+}
+
+.wire-runner__header {
+  margin-bottom: 0.8rem;
+}
+
+.wire-runner__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffe8a8;
+}
+
+.wire-runner__subtitle {
+  margin-top: 0.2rem;
+  color: #dce8ee;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.wire-runner__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.wire-runner__btn {
+  background: linear-gradient(180deg, #16384a 0%, #0f2837 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: #f5f8ff;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.wire-runner__btn--primary {
+  background: linear-gradient(180deg, #ffd87a 0%, #f7a93c 100%);
+  color: #1f2a2f;
+  border-color: rgba(255, 230, 180, 0.8);
+  box-shadow: 0 10px 26px rgba(247, 188, 84, 0.35);
+}
+
+.wire-runner__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.wire-runner__status {
+  color: #cde8ff;
+  font-size: 0.92rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.wire-runner__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  color: #f7f1dc;
+}
+
+.wire-runner__stats span strong {
+  color: #ffe38a;
+}
+
+.wire-runner__layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.wire-runner__canvas-wrapper {
+  position: relative;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 227, 170, 0.05), transparent 50%),
+    linear-gradient(180deg, #0b131d 0%, #0c1823 70%, #11212c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 14px 26px rgba(0, 0, 0, 0.35);
+}
+
+.wire-runner__canvas {
+  width: 100%;
+  height: 320px;
+  display: block;
+}
+
+.wire-runner__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #ffe9b5;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(180deg, rgba(7, 17, 30, 0.55), rgba(12, 28, 41, 0.55));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.wire-runner__overlay--show {
+  opacity: 1;
+}
+
+.wire-runner__help {
+  background: rgba(14, 32, 37, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  color: #d8e9f3;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.wire-runner__help-title {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  color: #ffe8a8;
+}
+
+.wire-runner__help ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .wire-runner__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wire-runner__help {
+    order: -1;
+  }
+}

@@ -1,15 +1,31 @@
 // Spiel 6: Nikolaus-Capybara-Sprint – Drücke abwechselnd F und H, um schneller zu laufen!
 
-const CAPY_TRACK_LENGTH = 140;
+// --- Basis-Konstanten ---
+
 const CAPY_BOT_COUNT = 5;
-const CAPY_MAX_SPEED = 10.5;
-const CAPY_FRICTION = 3.8;
-const CAPY_SPEED_GAIN = 2.6;
-const CAPY_SPEED_PENALTY = 1.25;
-const CAPY_BASE_PLAYER = 3.1;
-const CAPY_BASE_BOT = 2.8;
-const CAPY_BOT_VARIANCE = 1.2;
-const CAPY_BURST_CHANCE = 0.22;
+
+// Fortschritt 0–1 über die Strecke (wir mappen später auf Pixel)
+const CAPY_TRACK_LENGTH = 1;
+
+// Spieler-Physik (0–1 pro Sekunde)
+const CAPY_PLAYER_BASE_SPEED = 0.012;     // Grundtempo
+const CAPY_PLAYER_MAX_SPEED = 0.14;       // Top-Speed
+const CAPY_PLAYER_SPEED_GAIN = 0.1;       // Bonus pro korrektem F/H-Treffer
+const CAPY_PLAYER_SPEED_PENALTY = 0.01;   // Abzug bei falscher Taste
+const CAPY_PLAYER_FRICTION = 1.0;         // Geschwindigkeit fällt pro Sekunde ab
+
+// Bot-Finishzeiten in Sekunden – bester Bot ist Basis für Stern-Zeiten
+// Schnellster Bot: 15.0 Sekunden
+const CAPY_BOT_FINISH_TIMES = [15.0, 15.7, 16.5, 17.3, 16.3];
+
+// Sternstufen nach Zeitdifferenz zur Bestzeit des schnellsten Bots
+// diff = bestBotTime - playerTime
+const CAPY_STAR_DELTA_THRESHOLDS = {
+  brown: 0.001, // knapp schneller als der schnellste Bot
+  silver: 0.6,
+  gold: 1.2,
+  red: 2.0
+};
 
 window.AdventGames = window.AdventGames || {};
 
@@ -17,326 +33,206 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
-  let lastTimestamp = null;
-  let raf = null;
-  let countdownTimer = null;
-  let countdownValue = 3;
-  let raceStarted = false;
-  let raceFinished = false;
-  let expectedKey = "f";
-  let lastPressTime = 0;
+  const STAR_STORAGE_KEY = "capybara_sprint_best_star";
+  const STAR_ORDER = ["brown", "silver", "gold", "red"];
 
-  const lanes = [];
-  let finishThresholdPercent = 98;
-  let trackWrap = null;
-  let finishLine = null;
-
-  function ensureStyles() {
-    if (document.getElementById("capy-sprint-styles")) return;
-    const style = document.createElement("style");
-    style.id = "capy-sprint-styles";
-    style.textContent = `
-      .capy-sprint-game {
-        position: relative;
-        color: #fdfdfd;
-        font-family: "Inter", "Nunito", system-ui, -apple-system, sans-serif;
-        background: linear-gradient(180deg, #0a1429 0%, #0b1c34 60%, #0a1222 100%);
-        border-radius: 18px;
-        padding: 14px;
-        overflow: hidden;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 16px 32px rgba(0,0,0,0.35);
-      }
-      .capy-sprint-game::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 15% 20%, rgba(255,255,255,0.07), transparent 40%),
-          radial-gradient(circle at 85% 25%, rgba(255, 100, 120, 0.08), transparent 40%),
-          radial-gradient(circle at 50% 90%, rgba(120, 210, 255, 0.06), transparent 42%);
-        pointer-events: none;
-      }
-      .capy-header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        position: relative;
-        z-index: 1;
-      }
-      .capy-title {
-        font-weight: 800;
-        letter-spacing: 0.3px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .capy-hint {
-        color: #d6e5ff;
-        font-size: 0.95rem;
-      }
-      .capy-stats {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 0.9rem;
-      }
-      .capy-pill {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 999px;
-        padding: 6px 10px;
-        display: inline-flex;
-        gap: 6px;
-        align-items: center;
-      }
-      .capy-key-hint strong { color: #ffe9a3; }
-      .capy-track-wrap {
-        margin-top: 12px;
-        background: linear-gradient(120deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: inset 0 0 22px rgba(0,0,0,0.45);
-        padding: 14px 18px 22px;
-        min-height: 420px;
-      }
-      .capy-track-backdrop {
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 10px, transparent 10px 26px),
-          linear-gradient(180deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 100%);
-        opacity: 0.18;
-        pointer-events: none;
-      }
-      .capy-track {
-        position: relative;
-        display: grid;
-        grid-template-rows: repeat(${CAPY_BOT_COUNT + 1}, 1fr);
-        gap: 0;
-        background: linear-gradient(180deg, #17334f 0%, #0f2338 40%, #0b1b2e 100%);
-        padding: 18px 26px 26px;
-        min-height: 360px;
-      }
-      .capy-lane {
-        position: relative;
-        border-bottom: 1px dashed rgba(255,255,255,0.12);
-        min-height: 78px;
-        display: flex;
-        align-items: center;
-        padding-left: 10px;
-      }
-      .capy-lane:last-child { border-bottom: none; }
-      .capy-lane::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
-        opacity: 0.5;
-        pointer-events: none;
-      }
-      .capy-lane:nth-child(even)::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(45deg, rgba(255,0,76,0.05) 0 14px, transparent 14px 26px);
-        mix-blend-mode: screen;
-        opacity: 0.35;
-      }
-      .capy-runner {
-        position: absolute;
-        left: 0;
-        bottom: 6px;
-        width: 82px;
-        height: 54px;
-        transform: translateX(0%);
-        transition: transform 90ms ease-out;
-        z-index: 2;
-      }
-      .capy-sprite {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        background: url("assets/img/capybara_skin.gif") center/cover no-repeat;
-        filter: drop-shadow(0 8px 12px rgba(0,0,0,0.35));
-        border-radius: 10px;
-      }
-      .capy-runner.player .capy-sprite {
-        box-shadow: 0 0 0 3px rgba(255, 222, 121, 0.6), 0 10px 18px rgba(0, 0, 0, 0.35);
-      }
-      .capy-runner.player .capy-sprite::after {
-        content: "";
-        position: absolute;
-        width: 48px;
-        height: 36px;
-        background: url("assets/img/capy_hat.png") center/contain no-repeat;
-        top: -18px;
-        left: 18px;
-        transform: rotate(-6deg);
-      }
-      .capy-runner.bot .capy-sprite {
-        filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4)) saturate(0.95);
-        opacity: 0.95;
-      }
-      .capy-badge {
-        position: absolute;
-        top: -6px;
-        left: 2px;
-        background: rgba(0,0,0,0.35);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: #fff;
-        border-radius: 8px;
-        padding: 3px 6px;
-        font-weight: 800;
-        font-size: 0.6rem;
-        letter-spacing: 0.25px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        opacity: 0.8;
-        backdrop-filter: blur(2px);
-        pointer-events: none;
-      }
-      .capy-badge::before {
-        content: "";
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: currentColor;
-        box-shadow: 0 0 10px currentColor;
-      }
-      .capy-runner.player .capy-badge {
-        background: linear-gradient(120deg, #ffe27a, #ff9f43);
-        color: #361300;
-        border-color: rgba(255,255,255,0.7);
-      }
-      .capy-runner.bot:nth-child(odd) .capy-badge { color: #7dd3fc; }
-      .capy-runner.bot:nth-child(even) .capy-badge { color: #b19bff; }
-      .capy-start-line, .capy-finish-line {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 12px;
-        background: repeating-linear-gradient(180deg, #fff 0 10px, #c20000 10px 20px);
-        opacity: 0.9;
-        box-shadow: 0 0 12px rgba(255,255,255,0.5);
-        z-index: 0;
-        pointer-events: none;
-        mix-blend-mode: screen;
-      }
-      .capy-start-line { left: 10px; }
-      .capy-finish-line { right: 16px; }
-      .capy-snow {
-        position: absolute;
-        inset: 0;
-        background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.5) 0 1px, transparent 1px),
-          radial-gradient(circle at 40% 10%, rgba(255,255,255,0.65) 0 1px, transparent 1px),
-          radial-gradient(circle at 70% 30%, rgba(255,255,255,0.5) 0 1.2px, transparent 1.2px),
-          radial-gradient(circle at 20% 70%, rgba(255,255,255,0.4) 0 1.2px, transparent 1.2px),
-          radial-gradient(circle at 80% 80%, rgba(255,255,255,0.55) 0 1.2px, transparent 1.2px);
-        background-size: 240px 240px;
-        opacity: 0.5;
-        animation: capy-snow 14s linear infinite;
-        pointer-events: none;
-      }
-      @keyframes capy-snow {
-        0% { background-position: 0 0, 120px 40px, 60px 120px, 90px 180px, 160px 0; }
-        100% { background-position: 0 240px, 120px 280px, 60px 360px, 90px 420px, 160px 240px; }
-      }
-      .capy-overlay {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(180deg, rgba(7,12,26,0.9), rgba(6,10,20,0.92));
-        color: #fefefe;
-        text-align: center;
-        z-index: 4;
-      }
-      .capy-overlay.hidden { display: none; }
-      .capy-overlay .box {
-        background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.15));
-        border: 1px solid rgba(255,255,255,0.18);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.35);
-        border-radius: 16px;
-        padding: 18px 22px;
-        max-width: 540px;
-      }
-      .capy-overlay .box h3 { margin: 0 0 10px; font-size: 1.3rem; letter-spacing: 0.3px; }
-      .capy-overlay .box p { margin: 0 0 8px; color: #d8e8ff; line-height: 1.5; }
-      .capy-overlay .box kbd {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 6px;
-        padding: 4px 8px;
-        font-weight: 700;
-      }
-      .capy-countdown {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        font-size: 3.2rem;
-        font-weight: 800;
-        text-shadow: 0 0 14px rgba(255,255,255,0.6);
-        background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.5));
-        z-index: 3;
-      }
-      .capy-countdown.hidden { display: none; }
-      .capy-result {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(180deg, rgba(6,10,22,0.9), rgba(6,10,22,0.94));
-        z-index: 5;
-      }
-      .capy-result.hidden { display: none; }
-      .capy-result .box {
-        background: linear-gradient(130deg, rgba(255,255,255,0.08), rgba(255,255,255,0.14));
-        border: 1px solid rgba(255,255,255,0.18);
-        border-radius: 16px;
-        padding: 18px 24px;
-        max-width: 540px;
-        text-align: center;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.4);
-      }
-      .capy-button {
-        margin-top: 12px;
-        padding: 12px 18px;
-        border-radius: 12px;
-        border: none;
-        font-weight: 800;
-        background: linear-gradient(120deg, #6cf0c7, #35b4ff);
-        color: #041220;
-        cursor: pointer;
-        box-shadow: 0 8px 18px rgba(53,180,255,0.35);
-      }
-      .capy-rankings {
-        margin-top: 12px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      .capy-rankings .pill {
-        background: rgba(255,255,255,0.08);
-        border-radius: 999px;
-        padding: 6px 10px;
-        border: 1px solid rgba(255,255,255,0.12);
-      }
-    `;
-    document.head.appendChild(style);
+  function starRank(level) {
+    const idx = STAR_ORDER.indexOf(level);
+    return idx === -1 ? 0 : idx + 1;
   }
 
-  function createLane(name, isPlayer, colorLabel) {
-    const lane = document.createElement("div");
-    lane.className = "capy-lane";
+  function starLabel(level) {
+    switch (level) {
+      case "red":
+        return "Roter Stern";
+      case "gold":
+        return "Goldener Stern";
+      case "silver":
+        return "Silberner Stern";
+      case "brown":
+      default:
+        return "Brauner Stern";
+    }
+  }
+
+  function loadBestStar() {
+    try {
+      return window.localStorage.getItem(STAR_STORAGE_KEY) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveBestStar(level) {
+    if (!level) return;
+    try {
+      const prev = loadBestStar();
+      if (!prev || starRank(level) > starRank(prev)) {
+        window.localStorage.setItem(STAR_STORAGE_KEY, level);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // diff > 0 = Spieler schneller als bester Bot
+  function determineStarFromTimes(playerTime, bestBotTime) {
+    const diff = bestBotTime - playerTime; // positiv = Spieler schneller oder gleich schnell
+
+    // Wenn du langsamer bist als der beste Bot → kein Stern
+    if (diff < 0) return null;
+
+    // Ab hier: du bist mindestens gleich schnell → mindestens braun
+    if (diff >= CAPY_STAR_DELTA_THRESHOLDS.red) return "red";
+    if (diff >= CAPY_STAR_DELTA_THRESHOLDS.gold) return "gold";
+    if (diff >= CAPY_STAR_DELTA_THRESHOLDS.silver) return "silver";
+
+    // gewonnen, aber weniger als 0.6s Vorsprung → brauner Stern
+    return "brown";
+  }
+
+  // --- State ---
+
+  let lanes = [];
+  let raceStarted = false;
+  let raceFinished = false;
+  let countdownTimer = null;
+  let countdownValue = 3;
+  let expectedKey = "f";
+  let lastPressTime = 0;
+  let raf = null;
+  let raceStartTime = null;
+  let lastFrameTime = null;
+
+  // Mapping von Fortschritt (0–1) → Pixel
+  let geom = {
+    startOffsetPx: 0,
+    usableDistancePx: 200
+  };
+
+  let bestStarLevel = loadBestStar();
+
+  // wird später nach DOM-Bau gesetzt
+  let bestStarPill = null;
+
+  function renderBestStar() {
+    if (!bestStarPill) return;
+    if (!bestStarLevel) {
+      bestStarPill.textContent = "";
+      bestStarPill.classList.add("hidden");
+    } else {
+      bestStarPill.textContent = `⭐ ${starLabel(bestStarLevel)}`;
+      bestStarPill.classList.remove("hidden");
+    }
+  }
+
+  // --- DOM-Struktur aufbauen ---
+
+  container.innerHTML = "";
+  container.classList.add("capy-sprint-container");
+
+  const root = document.createElement("div");
+  root.className = "capy-sprint-game";
+
+  const header = document.createElement("div");
+  header.className = "capy-header";
+  header.innerHTML = `
+    <div class="capy-title">
+      🎅🏽 Nikolaus-Capybara-Sprint
+      <span class="capy-pill capy-best-star-pill"></span>
+    </div>
+    <div class="capy-stats">
+      <span class="capy-pill capy-key-hint">Nächste Taste: <strong>F</strong></span>
+      <span class="capy-pill">Start mit Leertaste</span>
+      <button type="button" class="capy-button capy-restart-header">🔁 Neue Runde</button>
+    </div>
+  `;
+
+  const hint = document.createElement("div");
+  hint.className = "capy-hint";
+  hint.textContent =
+    "Drücke F und H im Wechsel – je sauberer du wechselst, desto schneller rennt dein Nikolaus-Capy.";
+
+  const trackWrap = document.createElement("div");
+  trackWrap.className = "capy-track-wrap";
+
+  const trackBackdrop = document.createElement("div");
+  trackBackdrop.className = "capy-track-backdrop";
+  trackWrap.appendChild(trackBackdrop);
+
+  const track = document.createElement("div");
+  track.className = "capy-track";
+  trackWrap.appendChild(track);
+
+  const startLine = document.createElement("div");
+  startLine.className = "capy-start-line";
+  trackWrap.appendChild(startLine);
+
+  const finishLine = document.createElement("div");
+  finishLine.className = "capy-finish-line";
+  trackWrap.appendChild(finishLine);
+
+  const snow = document.createElement("div");
+  snow.className = "capy-snow";
+  trackWrap.appendChild(snow);
+
+  root.appendChild(header);
+  root.appendChild(hint);
+  root.appendChild(trackWrap);
+  container.appendChild(root);
+
+  const keyHint = header.querySelector(".capy-key-hint");
+  bestStarPill = header.querySelector(".capy-best-star-pill");
+  const restartHeaderBtn = header.querySelector(".capy-restart-header");
+
+  // Start-Overlay
+  const startOverlay = document.createElement("div");
+  startOverlay.className = "capy-overlay";
+  startOverlay.innerHTML = `
+    <div class="box">
+      <h3>Nikolaus bereit?</h3>
+      <p><kbd>Leertaste</kbd> für den Start-Countdown.</p>
+      <p>Danach im Rhythmus <kbd>F</kbd> – <kbd>H</kbd> – <kbd>F</kbd> – <kbd>H</kbd> drücken, um Tempo aufzubauen.</p>
+      <p>Du bist das Capy mit Mütze – schlag die Neon-Bots an der Ziellinie.</p>
+    </div>
+  `;
+  root.appendChild(startOverlay);
+
+  // Countdown
+  const countdownEl = document.createElement("div");
+  countdownEl.className = "capy-countdown hidden";
+  const countdownText = document.createElement("div");
+  countdownEl.appendChild(countdownText);
+  root.appendChild(countdownEl);
+
+  // Ergebnis-Overlay
+  const resultOverlay = document.createElement("div");
+  resultOverlay.className = "capy-result hidden";
+  resultOverlay.innerHTML = `
+    <div class="box">
+      <h3 class="result-title"></h3>
+      <p class="result-text"></p>
+      <div class="capy-rankings"></div>
+      <div class="capy-result-actions">
+        <button type="button" class="capy-button capy-close-result">Okay</button>
+      </div>
+    </div>
+  `;
+  root.appendChild(resultOverlay);
+
+  const resultTitle = resultOverlay.querySelector(".result-title");
+  const resultText = resultOverlay.querySelector(".result-text");
+  const rankings = resultOverlay.querySelector(".capy-rankings");
+  const closeResultBtn = resultOverlay.querySelector(".capy-close-result");
+
+  // --- Lane-/Runner-Aufbau ---
+
+  function createLane(name, isPlayer, label) {
+    const laneEl = document.createElement("div");
+    laneEl.className = "capy-lane";
 
     const runner = document.createElement("div");
-    runner.className = `capy-runner${isPlayer ? " player" : " bot"}`;
+    runner.className = "capy-runner" + (isPlayer ? " player" : " bot");
     runner.dataset.name = name;
 
     const sprite = document.createElement("div");
@@ -345,139 +241,256 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
 
     const badge = document.createElement("div");
     badge.className = "capy-badge";
-    badge.textContent = isPlayer ? "DU" : colorLabel;
+    badge.textContent = label;
     runner.appendChild(badge);
 
-    lane.appendChild(runner);
+    laneEl.appendChild(runner);
+    track.appendChild(laneEl);
 
-    return { lane, runner };
+    return { laneEl, runnerEl: runner };
   }
 
-  function buildLanes(track) {
-    lanes.length = 0;
+  function initLanes() {
+    lanes = [];
+
+    // Spieler in Lane 1
     const playerLane = createLane("Du", true, "DU");
-    track.appendChild(playerLane.lane);
     lanes.push({
       name: "Du",
       isPlayer: true,
       progress: 0,
       speed: 0,
       finished: false,
-      finishTime: null,
-      runnerEl: playerLane.runner
+      finishTimeSec: null,
+      runnerEl: playerLane.runnerEl
     });
 
-    for (let i = 0; i < CAPY_BOT_COUNT; i += 1) {
-      const botLabel = `BOT-${i + 1}`;
-      const botLane = createLane(botLabel, false, botLabel);
-      track.appendChild(botLane.lane);
+    // Bots in den weiteren Lanes
+    for (let i = 0; i < CAPY_BOT_COUNT; i++) {
+      const label = `BOT-${i + 1}`;
+      const lane = createLane(`Capybot ${i + 1}`, false, label);
+      const baseTime =
+        CAPY_BOT_FINISH_TIMES[i] ||
+        CAPY_BOT_FINISH_TIMES[CAPY_BOT_FINISH_TIMES.length - 1];
+      const speed = CAPY_TRACK_LENGTH / baseTime; // konstante Geschwindigkeit
+
       lanes.push({
         name: `Capybot ${i + 1}`,
         isPlayer: false,
         progress: 0,
-        speed: CAPY_BASE_BOT + Math.random() * CAPY_BOT_VARIANCE,
+        speed,
+        baseFinishTimeSec: baseTime,
         finished: false,
-        finishTime: null,
-        runnerEl: botLane.runner,
-        burstCooldown: 0,
-        skill: 0.7 + Math.random() * 0.6,
-        aggression: 0.15 + Math.random() * 0.25
+        finishTimeSec: null,
+        runnerEl: lane.runnerEl
       });
     }
   }
+
+  initLanes();
+
+  // --- Geometrie für Strecke ---
+
+  function updateGeometry() {
+    const firstLaneRunner = lanes[0]?.runnerEl;
+    if (!firstLaneRunner) return;
+
+    const laneRect = firstLaneRunner.parentElement.getBoundingClientRect();
+    const startRect = startLine.getBoundingClientRect();
+    const finishRect = finishLine.getBoundingClientRect();
+
+    // X-Positionen relativ zur Lane
+    const startX = startRect.left - laneRect.left;
+    const finishX = finishRect.left - laneRect.left;
+
+    // nutzbare Strecke zwischen Start- und Ziellinie (linke Kante)
+    const usable = finishX - startX;
+
+    geom.startOffsetPx = startX;
+    geom.usableDistancePx = Math.max(40, usable);
+  }
+
+  function applyRunnerPosition(lane) {
+    const x = geom.startOffsetPx + lane.progress * geom.usableDistancePx;
+    lane.runnerEl.style.transform = `translateX(${x}px)`;
+  }
+
+  function applyAllRunnerPositions() {
+    lanes.forEach(applyRunnerPosition);
+  }
+
+  // --- Race Reset / Start / Finish ---
 
   function updateKeyHint() {
     keyHint.innerHTML = `Nächste Taste: <strong>${expectedKey.toUpperCase()}</strong>`;
   }
 
-  function recalcFinishLine() {
-    if (!trackWrap || !finishLine || !lanes.length) return;
-    const trackRect = trackWrap.getBoundingClientRect();
-    const finishRect = finishLine.getBoundingClientRect();
-    const runnerWidth = lanes[0]?.runnerEl.offsetWidth || 80;
-    const usableWidth = Math.max(1, trackRect.width - runnerWidth);
-    const distanceToFinish = finishRect.left - trackRect.left - runnerWidth * 0.35;
-    const clampedDistance = Math.max(usableWidth * 0.75, Math.min(usableWidth * 0.96, distanceToFinish));
-    finishThresholdPercent = (clampedDistance / usableWidth) * 100;
-  }
-
   function resetRace() {
-    raceFinished = false;
     raceStarted = false;
-    lastTimestamp = null;
+    raceFinished = false;
+    raceStartTime = null;
+    lastFrameTime = null;
     countdownValue = 3;
     expectedKey = "f";
     lastPressTime = 0;
-    updateKeyHint();
 
-    lanes.forEach((lane) => {
-      lane.progress = 0;
-      lane.speed = lane.isPlayer ? 0 : CAPY_BASE_BOT + Math.random() * CAPY_BOT_VARIANCE;
-      lane.finished = false;
-      lane.finishTime = null;
-      lane.burstCooldown = 0;
-      lane.runnerEl.style.transform = "translateX(0%)";
-    });
+    if (countdownTimer) {
+      window.clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
 
-    startOverlay.classList.remove("hidden");
     countdownEl.classList.add("hidden");
+    startOverlay.classList.remove("hidden");
     resultOverlay.classList.add("hidden");
 
-    recalcFinishLine();
+    lanes.forEach((lane, idx) => {
+      lane.progress = 0;
+      lane.finished = false;
+      lane.finishTimeSec = null;
+
+      if (!lane.isPlayer) {
+        const baseTime =
+          CAPY_BOT_FINISH_TIMES[idx - 1] ||
+          CAPY_BOT_FINISH_TIMES[CAPY_BOT_FINISH_TIMES.length - 1];
+        lane.baseFinishTimeSec = baseTime;
+        lane.speed = CAPY_TRACK_LENGTH / baseTime;
+      } else {
+        lane.speed = 0;
+      }
+    });
+
+    updateGeometry();
+    applyAllRunnerPositions();
+    updateKeyHint();
   }
 
-  function finishRace(winner) {
+  function finishRace(winnerLane) {
+    if (raceFinished) return;
     raceFinished = true;
     raceStarted = false;
+
     if (raf) cancelAnimationFrame(raf);
     raf = null;
 
+    const playerLane = lanes.find((l) => l.isPlayer);
+    const bots = lanes.filter((l) => !l.isPlayer);
+
+    // Ranking nach Finishzeit oder Fortschritt
     const ranking = lanes
       .slice()
       .sort((a, b) => {
-        if (a.finishTime === null) return 1;
-        if (b.finishTime === null) return -1;
-        return a.finishTime - b.finishTime;
+        if (a.finishTimeSec != null && b.finishTimeSec != null) {
+          return a.finishTimeSec - b.finishTimeSec;
+        }
+        if (a.finishTimeSec != null) return -1;
+        if (b.finishTimeSec != null) return 1;
+        return b.progress - a.progress;
       });
 
     rankings.innerHTML = "";
     ranking.forEach((lane, idx) => {
       const pill = document.createElement("div");
       pill.className = "pill";
-      pill.textContent = `${idx + 1}. ${lane.name}`;
+      const pos = idx + 1;
+      pill.textContent = `${pos}. ${lane.name}`;
       rankings.appendChild(pill);
     });
 
-    resultTitle.textContent = winner.isPlayer ? "Du hast gewonnen!" : `${winner.name} war knapp schneller...`;
-    resultText.textContent = winner.isPlayer
-      ? "Juhu! Öffne jetzt das sechste echte Adventstürchen und gönn dir die Belohnung."
-      : "Probier es direkt nochmal, mit schnellerem F/H-Wechsel holst du den Sieg.";
+    // Für Sterne nehmen wir immer die Design-Bestzeit des schnellsten Bots
+    const bestBotBaseTime = Math.min(...CAPY_BOT_FINISH_TIMES);
 
-    restartBtn.textContent = winner.isPlayer ? "Trotzdem nochmal sprinten" : "Revanche starten";
+    if (winnerLane.isPlayer && playerLane && playerLane.finishTimeSec != null) {
+      // Stern-Berechnung: nur wenn du alle Bots schlägst
+      const runLevel = determineStarFromTimes(
+        playerLane.finishTimeSec,
+        bestBotBaseTime
+      );
+      let unlockedText = "";
 
-    resultOverlay.classList.remove("hidden");
+      if (runLevel) {
+        const prev = bestStarLevel;
+        const newRank = starRank(runLevel);
+        const prevRank = starRank(prev);
 
-    if (winner.isPlayer) {
-      try {
-        onWin({ level: "brown", label: "Brauner Stern" });
-      } catch (e) {
-        console.error("onWin callback error", e);
+        if (!prev || newRank > prevRank) {
+          bestStarLevel = runLevel;
+          saveBestStar(runLevel);
+          renderBestStar();
+          try {
+            onWin({ level: runLevel, label: starLabel(runLevel) });
+          } catch (e) {
+            console.error("onWin callback error", e);
+          }
+        }
+
+        unlockedText = ` – ${starLabel(runLevel)}`;
+      }
+
+      const diff = bestBotBaseTime - playerLane.finishTimeSec;
+      const diffText =
+        diff > 0
+          ? `(${diff.toFixed(2).replace(".", ",")}s schneller als der beste Bot)`
+          : "";
+
+      resultTitle.textContent = "Du hast das Rennen gewonnen!";
+      resultText.innerHTML =
+        `Deine Zeit: <strong>${playerLane.finishTimeSec
+          .toFixed(2)
+          .replace(".", ",")}s</strong> ${diffText}<br>` +
+        `Referenz-Bot (schnellster): <strong>${bestBotBaseTime
+          .toFixed(2)
+          .replace(".", ",")}s</strong>${unlockedText || ""}`;
+    } else {
+      // Spieler verliert
+      const fastestBot = bots.reduce(
+        (best, cur) => {
+          if (!best) return cur;
+          return (cur.baseFinishTimeSec || Infinity) < (best.baseFinishTimeSec || Infinity)
+            ? cur
+            : best;
+        },
+        null
+      );
+
+      resultTitle.textContent = `${winnerLane.name} war schneller…`;
+      if (fastestBot) {
+        const fastestTime =
+          fastestBot.finishTimeSec != null
+            ? fastestBot.finishTimeSec
+            : fastestBot.baseFinishTimeSec;
+
+        resultText.innerHTML =
+          `Schnellster Bot: <strong>${fastestTime
+            .toFixed(2)
+            .replace(".", ",")}s</strong><br>` +
+          `Versuch, mit sauberem F/H-Wechsel die Neon-Capys zu überholen.`;
+      } else {
+        resultText.textContent =
+          "Die Capy-Bots haben dich knapp abgehängt – probier direkt noch eine Runde.";
       }
     }
+
+    resultOverlay.classList.remove("hidden");
   }
 
   function startRace() {
+    if (raceStarted || raceFinished) return;
     raceStarted = true;
+    raceFinished = false;
+    raceStartTime = performance.now();
+    lastFrameTime = raceStartTime;
     startOverlay.classList.add("hidden");
     countdownEl.classList.add("hidden");
-    lastTimestamp = performance.now();
+
+    if (raf) cancelAnimationFrame(raf);
     raf = requestAnimationFrame(tick);
   }
 
   function beginCountdown() {
-    if (raceStarted || countdownTimer) return;
+    if (raceStarted || raceFinished || countdownTimer) return;
     startOverlay.classList.add("hidden");
     countdownEl.classList.remove("hidden");
+
     countdownValue = 3;
     countdownText.textContent = countdownValue;
 
@@ -495,189 +508,135 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     }, 800);
   }
 
+  // --- Input ---
+
   function handleKeydown(e) {
     const key = e.key.toLowerCase();
 
     if (key === " ") {
       e.preventDefault();
-      if (!raceStarted && !raceFinished) beginCountdown();
+      if (!raceStarted && !raceFinished) {
+        beginCountdown();
+      }
       return;
     }
 
     if (!raceStarted || raceFinished) return;
 
     if (key === "f" || key === "h") {
+      const playerLane = lanes.find((l) => l.isPlayer);
+      if (!playerLane) return;
+
       if (key === expectedKey) {
         const now = performance.now();
-        const pressBoost = Math.max(0.6, 1.4 - Math.min(1.2, (now - lastPressTime) / 900));
-        const lane = lanes.find((l) => l.isPlayer);
-        lane.speed = Math.min(CAPY_MAX_SPEED, lane.speed + CAPY_SPEED_GAIN * pressBoost);
+        const timeSinceLast = (now - lastPressTime) / 1000;
+        const rhythmFactor = isFinite(timeSinceLast)
+          ? Math.max(0.6, Math.min(1.4, 1.4 - (timeSinceLast - 0.2)))
+          : 1.0;
+
+        playerLane.speed = Math.min(
+          CAPY_PLAYER_MAX_SPEED,
+          playerLane.speed + CAPY_PLAYER_SPEED_GAIN * rhythmFactor
+        );
+
         expectedKey = expectedKey === "f" ? "h" : "f";
         lastPressTime = now;
       } else {
-        const lane = lanes.find((l) => l.isPlayer);
-        lane.speed = Math.max(0, lane.speed - CAPY_SPEED_PENALTY);
+        playerLane.speed = Math.max(
+          0,
+          playerLane.speed - CAPY_PLAYER_SPEED_PENALTY
+        );
       }
       updateKeyHint();
     }
   }
 
-  function tick(timestamp) {
-    if (!lastTimestamp) lastTimestamp = timestamp;
-    const delta = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
-    lastTimestamp = timestamp;
+  // --- Game Loop ---
 
-    let winner = null;
-    const playerLane = lanes.find((l) => l.isPlayer);
+  function tick(timestamp) {
+    if (!raceStarted || raceFinished) return;
+    if (!raceStartTime) raceStartTime = timestamp;
+    if (!lastFrameTime) lastFrameTime = timestamp;
+
+    const dt = Math.min(0.05, (timestamp - lastFrameTime) / 1000);
+    lastFrameTime = timestamp;
+    const elapsedSec = (timestamp - raceStartTime) / 1000;
+
+    let winnerLane = null;
+
+    const finishRect = finishLine.getBoundingClientRect();
+    const finishX = finishRect.left + finishRect.width / 2;
 
     lanes.forEach((lane) => {
-      if (lane.finished) return;
-
-      if (lane.isPlayer) {
-        const fatigue = Math.max(0, (performance.now() - lastPressTime - 1400) / 2000);
-        lane.speed = Math.max(0, lane.speed - CAPY_FRICTION * delta - fatigue * delta);
-        const velocity = CAPY_BASE_PLAYER + lane.speed;
-        lane.progress += velocity * delta;
-      } else {
-        lane.burstCooldown = Math.max(0, lane.burstCooldown - delta);
-        const catchup = Math.max(0, (playerLane?.progress || 0) - lane.progress);
-        const aggressionBoost = catchup > CAPY_TRACK_LENGTH * 0.08 ? Math.min(3.2, catchup * 0.06) : 0;
-        const finishKick = (playerLane?.progress || 0) > CAPY_TRACK_LENGTH * 0.6 ? 1.2 : 0;
-
-        if (lane.burstCooldown <= 0 && Math.random() < CAPY_BURST_CHANCE) {
-          lane.speed += 1.6 + lane.skill * 0.25;
-          lane.burstCooldown = 1.2 + Math.random();
-        }
-
-        lane.speed = Math.max(
-          CAPY_BASE_BOT + lane.skill * 0.5,
-          lane.speed - 1.2 * delta + aggressionBoost * delta + finishKick * delta
-        );
-        const botPace = lane.speed * (1 + lane.aggression * 0.35);
-        lane.progress += botPace * delta;
+      if (lane.finished) {
+        // bereits fertige Läufer einfach an ihrer letzten Position lassen
+        applyRunnerPosition(lane);
+        return;
       }
 
-      const progressPercent = Math.min(
-        finishThresholdPercent,
-        (lane.progress / CAPY_TRACK_LENGTH) * finishThresholdPercent
-      );
-      lane.runnerEl.style.transform = `translateX(${progressPercent}%)`;
+      if (lane.isPlayer) {
+        // Geschwindigkeit fällt wieder ab
+        lane.speed = Math.max(0, lane.speed - CAPY_PLAYER_FRICTION * dt);
+        const v = CAPY_PLAYER_BASE_SPEED + lane.speed;
+        lane.progress += (v * dt) / CAPY_TRACK_LENGTH;
+      } else {
+        lane.progress += (lane.speed * dt) / CAPY_TRACK_LENGTH;
+      }
 
-      if (progressPercent >= finishThresholdPercent) {
+      // Progress im sinnvollen Bereich halten
+      if (lane.progress < 0) lane.progress = 0;
+      if (lane.progress > 1.2) lane.progress = 1.2;
+
+      applyRunnerPosition(lane);
+
+      const runnerRect = lane.runnerEl.getBoundingClientRect();
+      const runnerFrontX = runnerRect.right;
+
+      // Ziellinie erreicht, sobald die "Nase" die Mitte der Linie schneidet
+      if (runnerFrontX >= finishX) {
         lane.finished = true;
-        lane.finishTime = timestamp;
-        if (!winner) winner = lane;
+        lane.finishTimeSec = elapsedSec;
+        lane.progress = Math.min(1, lane.progress);
+        if (!winnerLane) winnerLane = lane;
       }
     });
 
-    if (winner && !raceFinished) {
-      finishRace(winner);
+    if (winnerLane) {
+      finishRace(winnerLane);
       return;
     }
 
-    if (!raceFinished) {
-      raf = requestAnimationFrame(tick);
-    }
+    raf = requestAnimationFrame(tick);
   }
 
-  ensureStyles();
+  // --- Event Listener & Init ---
 
-  container.innerHTML = "";
-  container.classList.add("capy-sprint-container");
+  function handleResize() {
+    updateGeometry();
+    applyAllRunnerPositions();
+  }
 
-  const root = document.createElement("div");
-  root.className = "capy-sprint-game";
-
-  const header = document.createElement("div");
-  header.className = "capy-header";
-  header.innerHTML = `
-    <div class="capy-title">🎅🏽 Nikolaus-Capybara-Sprint</div>
-    <div class="capy-stats">
-      <span class="capy-pill capy-key-hint">Nächste Taste: <strong>F</strong></span>
-      <span class="capy-pill">Starte mit Leertaste</span>
-    </div>
-  `;
-
-  const hint = document.createElement("div");
-  hint.className = "capy-hint";
-  hint.textContent = "Hämmer F und H im Wechsel, halte die Neon-Bots in Schach und gewinne gegen 5 Capybara-Rivalen!";
-
-  trackWrap = document.createElement("div");
-  trackWrap.className = "capy-track-wrap";
-
-  const trackBackdrop = document.createElement("div");
-  trackBackdrop.className = "capy-track-backdrop";
-  trackWrap.appendChild(trackBackdrop);
-
-  const track = document.createElement("div");
-  track.className = "capy-track";
-  trackWrap.appendChild(track);
-
-  const startLine = document.createElement("div");
-  startLine.className = "capy-start-line";
-  trackWrap.appendChild(startLine);
-
-  finishLine = document.createElement("div");
-  finishLine.className = "capy-finish-line";
-  trackWrap.appendChild(finishLine);
-
-  const snow = document.createElement("div");
-  snow.className = "capy-snow";
-  trackWrap.appendChild(snow);
-
-  root.appendChild(header);
-  root.appendChild(hint);
-  root.appendChild(trackWrap);
-  container.appendChild(root);
-
-  const keyHint = header.querySelector(".capy-key-hint");
-
-  const startOverlay = document.createElement("div");
-  startOverlay.className = "capy-overlay";
-  startOverlay.innerHTML = `
-    <div class="box">
-      <h3>Bereit für den Nikolaus-Sprint?</h3>
-      <p>Drücke <kbd>Leertaste</kbd>, dann zählt der Countdown 3, 2, 1 ... GO!</p>
-      <p>Um zu beschleunigen, hämmere <kbd>F</kbd> und <kbd>H</kbd> im Wechsel.</p>
-      <p>Du bist der Capy mit goldener Mütze. Die Bots tragen Neon-Badges – überhol sie!</p>
-    </div>
-  `;
-  root.appendChild(startOverlay);
-
-  const countdownEl = document.createElement("div");
-  countdownEl.className = "capy-countdown hidden";
-  const countdownText = document.createElement("div");
-  countdownEl.appendChild(countdownText);
-  root.appendChild(countdownEl);
-
-  const resultOverlay = document.createElement("div");
-  resultOverlay.className = "capy-result hidden";
-  resultOverlay.innerHTML = `
-    <div class="box">
-      <h3 class="result-title"></h3>
-      <p class="result-text"></p>
-      <div class="capy-rankings"></div>
-      <button class="capy-button">Nochmal sprinten</button>
-    </div>
-  `;
-  root.appendChild(resultOverlay);
-
-  const resultTitle = resultOverlay.querySelector(".result-title");
-  const resultText = resultOverlay.querySelector(".result-text");
-  const rankings = resultOverlay.querySelector(".capy-rankings");
-  const restartBtn = resultOverlay.querySelector(".capy-button");
-
-  buildLanes(track);
-  updateKeyHint();
-
-  restartBtn.addEventListener("click", resetRace);
-  startOverlay.addEventListener("click", () => beginCountdown());
+  if (restartHeaderBtn) {
+    restartHeaderBtn.addEventListener("click", resetRace);
+  }
+  if (closeResultBtn) {
+    closeResultBtn.addEventListener("click", () => {
+      resultOverlay.classList.add("hidden");
+    });
+  }
+  startOverlay.addEventListener("click", beginCountdown);
 
   const keyHandler = (e) => handleKeydown(e);
   window.addEventListener("keydown", keyHandler);
-  const resizeHandler = () => recalcFinishLine();
-  window.addEventListener("resize", resizeHandler);
+  window.addEventListener("resize", handleResize);
 
+  // Erste Geometrie-Berechnung nach Layout
+  requestAnimationFrame(() => {
+    updateGeometry();
+    applyAllRunnerPositions();
+  });
+
+  renderBestStar();
   resetRace();
 
   return {
@@ -685,7 +644,7 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       if (raf) cancelAnimationFrame(raf);
       if (countdownTimer) window.clearInterval(countdownTimer);
       window.removeEventListener("keydown", keyHandler);
-      window.removeEventListener("resize", resizeHandler);
+      window.removeEventListener("resize", handleResize);
     }
   };
 };
