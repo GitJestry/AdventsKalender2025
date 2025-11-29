@@ -368,7 +368,7 @@ function initHeader() {
   }
 
   // Debug-Leiste nur im Testmodus anzeigen
-  if (ADVENT_CONFIG.debugMode) {
+  if (ADVENT_CONFIG.debugMode && false) {
     const header = document.querySelector(".page-header");
     if (header && !header.querySelector(".debug-bar")) {
       const dbg = document.createElement("div");
