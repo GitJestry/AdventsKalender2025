@@ -1,0 +1,85 @@
+.brick-heart-pong {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.brick-heart-pong-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.brick-heart-pong-lives {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.brick-heart-pong-lives span.heart {
+  font-size: 1rem;
+}
+
+.brick-heart-pong-status {
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.brick-heart-pong-controls .control-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.brick-heart-pong-controls .control-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.brick-heart-pong-controls .control-key {
+  min-width: 1.4rem;
+  text-align: center;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 0.8rem;
+}
+
+.brick-heart-pong-button-row {
+  display: flex;
+  justify-content: center;
+}
+
+.brick-heart-pong-start-btn {
+  border-radius: 999px;
+  padding: 0.35rem 1.2rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.9);
+  color: #b0214f;
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.2);
+}
+
+.brick-heart-pong-start-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.brick-heart-pong-canvas-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.brick-heart-pong canvas {
+  max-width: 100%;
+  border-radius: 0.75rem;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.5));
+}

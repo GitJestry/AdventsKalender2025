@@ -16,8 +16,7 @@ window.AdventGames["juli_crime_reading"] = function initReadingChallenge(
 
   const message = document.createElement("p");
   message.className = "reading-challenge__message";
-  message.textContent =
-    "Heute ist die Challenge mit Juli 2 Kapitel des Krimis zu lesen.";
+  message.textContent = "📚 Lies heute 2 Kapitel mit Juli.";
 
   const button = document.createElement("button");
   button.type = "button";

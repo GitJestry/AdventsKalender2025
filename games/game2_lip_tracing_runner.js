@@ -203,16 +203,15 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   const helpBox = document.createElement("aside");
   helpBox.className = "trace-help";
-  helpBox.innerHTML = `
+    helpBox.innerHTML = `
     <p class="trace-help-title">Steuerung</p>
     <ul>
-      <li><strong>Leertaste</strong>: Startet den Countdown (3, 2, 1, Go!).</li>
-      <li><strong>Pfeile ↑ / ↓</strong>: Stift nach oben / unten.</li>
-      <li><strong>Pfeile ← / →</strong>: Stärkeres seitliches Nachjustieren.</li>
-      <li>Der Screen scrollt nach rechts und schiebt dich an der linken Kante mit – bis du die <strong>Ziellinie</strong> berührst.</li>
+      <li>␣ <strong>Leertaste</strong> – Start / Pause</li>
+      <li>↑ / ↓ – Stift hoch / runter</li>
+      <li>← / → – grobes Nachjustieren</li>
     </ul>
     <p class="trace-help-title">Ziel</p>
-    <p>Halte so genau wie möglich die Spur – ab 90% Genauigkeit gilt die Challenge als bestanden und du bekommst einen Stern.</p>
+    <p>💄 Bleib auf der Spur – gute Genauigkeit bringt dir den Stern.</p>
   `;
 
   mainRow.appendChild(canvasWrapper);
@@ -225,7 +224,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
   const statusLine = document.createElement("p");
   statusLine.className = "trace-status-line";
-  statusLine.textContent = "Bereit. Drücke die Leertaste, um zu starten.";
+  statusLine.textContent = "Bereit – ␣ starten.";
 
   root.appendChild(header);
   root.appendChild(buttonsRow);
@@ -255,44 +254,51 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
   }
 
   // Nearest-Point-Suche auf der Spur im aktuellen Screen
-  function findNearestOnTrack(screenX, screenY) {
-    const searchRange = 180;
-    const steps = 45;
-    const baseWX = cameraX + screenX;
-    const startWX = baseWX - searchRange * 0.5;
-    const endWX = baseWX + searchRange * 0.5;
+function findNearestOnTrack(screenX, screenY) {
+  // Spur kann horizontale Offsets bis ca. +/-125px haben
+  const MAX_OFFSET = 60 + 40 + 25; // 125
+  // Suchbereich so groß machen, dass die echte Spur immer drin liegt
+  const searchRange = MAX_OFFSET * 2 + 40; // z.B. 290px
+  const steps = 100; // feinere Auflösung
 
-    let bestDist2 = Infinity;
-    let bestSX = screenX;
-    let bestSY = screenY;
+  const baseWX = cameraX + screenX;
+  const startWX = baseWX - searchRange * 0.5;
+  const endWX = baseWX + searchRange * 0.5;
 
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const wx = startWX + t * (endWX - startWX);
-      const ty = worldTrackY(wx);
-      const sx = (wx - cameraX) + worldTrackOffsetX(wx);
-      const dx = sx - screenX;
-      const dy = ty - screenY;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < bestDist2) {
-        bestDist2 = d2;
-        bestSX = sx;
-        bestSY = ty;
-      }
+  let bestDist2 = Infinity;
+  let bestSX = screenX;
+  let bestSY = screenY;
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const wx = startWX + t * (endWX - startWX);
+    const ty = worldTrackY(wx);
+    const sx = (wx - cameraX) + worldTrackOffsetX(wx);
+
+    const dx = sx - screenX;
+    const dy = ty - screenY;
+    const d2 = dx * dx + dy * dy;
+
+    if (d2 < bestDist2) {
+      bestDist2 = d2;
+      bestSX = sx;
+      bestSY = ty;
     }
-
-    return { sx: bestSX, sy: bestSY, dist2: bestDist2 };
   }
+
+  return { sx: bestSX, sy: bestSY, dist2: bestDist2 };
+}
+
 
   // Accuracy → Sternelogik, basierend auf GERUNDETEM Prozentwert
   function determineAccuracyReward(accPercent) {
-    if (accPercent >= 99) {
+    if (accPercent >= 100) {
       return { level: "red", label: "Roter Stern" };
     }
-    if (accPercent >= 96) {
+    if (accPercent >= 98) {
       return { level: "gold", label: "Goldener Stern" };
     }
-    if (accPercent >= 92) {
+    if (accPercent >= 94) {
       return { level: "silver", label: "Silberner Stern" };
     }
     if (accPercent >= 90) {
@@ -672,10 +678,20 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
     if (penY < marginY) penY = marginY;
     if (penY > height - marginY) penY = height - marginY;
 
-    const nearest = findNearestOnTrack(penX, penY);
+   const nearest = findNearestOnTrack(penX, penY);
     const dist = Math.sqrt(nearest.dist2);
-    const effectiveDist = Math.max(0, dist - BRUSH_RADIUS);
+
+    // kleiner Toleranzbereich: wer innerhalb von ~1–2px auf der Spur ist,
+    // bekommt 100% für diesen Frame
+    const DEAD_ZONE = BRUSH_RADIUS + 2; // z.B. 12px
+
+    let effectiveDist = 0;
+    if (dist > DEAD_ZONE) {
+      effectiveDist = dist - DEAD_ZONE;
+    }
+
     const frameAcc = Math.max(0, 1 - effectiveDist / MAX_DEVIATION);
+
 
     sumAccuracy += frameAcc;
     accuracySamples++;
@@ -839,8 +855,7 @@ window.AdventGames["lip_tracing_runner"] = function initLipTracingRunner(contain
 
     const statusLineEl = root.querySelector(".trace-status-line");
     if (statusLineEl) {
-      statusLineEl.textContent =
-        "Neu gestartet. Drücke die Leertaste, um den Countdown zu beginnen.";
+      statusLineEl.textContent = "Neu gestartet – ␣ für Countdown.";
       statusLineEl.classList.remove("trace-status-success", "trace-status-fail");
     }
     drawFrame();

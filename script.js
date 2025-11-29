@@ -15,6 +15,15 @@ const STAR_LEVEL_LABELS = {
   red: "Roter Stern",
 };
 
+/**
+ * Liefert eine numerische Rangordnung für Sternlevel.
+ * Höherer Wert = besserer Stern.
+ */
+function starLevelRank(level) {
+  const idx = STAR_LEVELS.indexOf(level);
+  return idx === -1 ? 0 : idx + 1;
+}
+
 function getDoorPullProgress() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_PULL_PROGRESS);
@@ -164,7 +173,7 @@ function createDoorStarfield(starLayer) {
   if (!starLayer) return;
 
   const palette = ["#ffd166", "#ffe9a3", "#fff4d6", "#f7c948", "#ffdf85"];
-  const totalStars = 20; // nur 15 Sterne pro Tür
+  const totalStars = 8; // weniger Sterne pro Tür für bessere Performance
 
   starLayer.innerHTML = "";
 
@@ -184,11 +193,7 @@ function createDoorStarfield(starLayer) {
     // Start-Position und Look
     randomizeDoorStarPosition(star, palette);
 
-    // Wenn ein Glow-Zyklus zu Ende ist: neue Position + Größe + Farbe
-    star.addEventListener("animationiteration", () => {
-      randomizeDoorStarPosition(star, palette);
-    });
-
+    // Glow-Animation ohne ständige Neu-Positionierung (Performance)
     fragment.appendChild(star);
   }
 
@@ -1029,7 +1034,18 @@ function handleGameWin(day, result) {
     dayStarLevels = {};
   }
 
-  const starInfo = sanitizeStarInfo(result || {});
+  // Neuen Stern bereinigen
+  let starInfo = sanitizeStarInfo(result || {});
+
+  // Falls bereits ein Stern für diesen Tag existiert, niemals einen schlechteren Stern speichern
+  const existingInfo = dayStarLevels[day];
+  if (existingInfo && typeof existingInfo === "object") {
+    const normalizedExisting = sanitizeStarInfo(existingInfo || {});
+    if (starLevelRank(normalizedExisting.level) > starLevelRank(starInfo.level)) {
+      starInfo = normalizedExisting;
+    }
+  }
+
   dayStarLevels[day] = starInfo;
   saveDayStarLevels(dayStarLevels);
 
@@ -1066,20 +1082,10 @@ function handleGameWin(day, result) {
 /* DATUMSLOGIK */
 
 function isDayAvailable(dayNumber) {
-  if (ADVENT_CONFIG.debugMode) return true;
-
-  const today = new Date();
-  const yearConfig = ADVENT_CONFIG.year;
-  const currentYear = today.getFullYear();
-  const targetYear = yearConfig ?? currentYear;
-
-  if (today.getFullYear() !== targetYear || today.getMonth() !== 11) {
-    return false;
-  }
-
-  const currentDay = today.getDate();
-  return currentDay >= dayNumber;
+  // Alle Türchen sind jederzeit verfügbar – wie ein „offener“ Adventskalender
+  return true;
 }
+
 
 /* COMPLETED STORAGE */
 
@@ -1197,7 +1203,7 @@ function initSnow() {
   const container = document.querySelector(".snow-layer");
   if (!container) return;
 
-  const flakes = 70;
+  const flakes = 40; // reduziert für bessere Performance
   for (let i = 0; i < flakes; i++) {
     const span = document.createElement("span");
     span.className = "snowflake";

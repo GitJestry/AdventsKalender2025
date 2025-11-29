@@ -2,17 +2,17 @@
 // Einstellbare Parameter direkt hier oben anpassen
 const MAI_GAME_DURATION = 30;       // Sekunden für eine Runde
 const MAI_TARGET_SCORE = 30;        // Zielpunktzahl zum Gewinnen
-const MAI_GOLDEN_BONUS = 3;         // Punkte für goldene Maiswaffeln
-const MAI_MISS_TIME_PENALTY = 0.7;  // Sekunden, die bei einem Fehlschuss verloren gehen
-const MAI_BASE_SPEED = 160;         // Basisspeed in px/s (schnellere Ziele)
+const MAI_GOLDEN_BONUS = 5;         // Punkte für goldene Maiswaffeln
+const MAI_MISS_TIME_PENALTY = 0.5;  // Sekunden, die bei einem Fehlschuss verloren gehen
+const MAI_BASE_SPEED = 150;         // Basisspeed in px/s (etwas schneller)
 const MAI_CROSSHAIR_SIZE = 70;      // px – präsenteres Fadenkreuz
 
 // Sterne nach Score
 const MAI_STAR_THRESHOLDS = {
   brown: MAI_TARGET_SCORE,
-  silver: MAI_TARGET_SCORE + 5,
-  gold: MAI_TARGET_SCORE + 10,
-  red: MAI_TARGET_SCORE + 20
+  silver: MAI_TARGET_SCORE + 15,
+  gold: MAI_TARGET_SCORE + 25,
+  red: MAI_TARGET_SCORE + 35,
 };
 
 window.AdventGames = window.AdventGames || {};
@@ -25,13 +25,6 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
   const HIGHSCORE_KEY = "maiwaffel_shooting_highscore_v1";
-  const BEST_STAR_KEY = "maiwaffel_shooting_best_star_v1";
-  const STAR_ORDER = ["brown", "silver", "gold", "red"];
-
-  function starRank(level) {
-    const idx = STAR_ORDER.indexOf(level);
-    return idx === -1 ? 0 : idx + 1;
-  }
 
   function starLabel(level) {
     switch (level) {
@@ -47,11 +40,16 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     }
   }
 
-  function determineStarFromScore(points) {
-    if (points >= MAI_STAR_THRESHOLDS.red) return "red";
-    if (points >= MAI_STAR_THRESHOLDS.gold) return "gold";
-    if (points >= MAI_STAR_THRESHOLDS.silver) return "silver";
-    if (points >= MAI_STAR_THRESHOLDS.brown) return "brown";
+  // Liefert Reward-Objekt wie in den anderen Spielen
+  function determineRewardFromScore(points) {
+    if (points >= MAI_STAR_THRESHOLDS.red)
+      return { level: "red", label: "Roter Stern" };
+    if (points >= MAI_STAR_THRESHOLDS.gold)
+      return { level: "gold", label: "Goldener Stern" };
+    if (points >= MAI_STAR_THRESHOLDS.silver)
+      return { level: "silver", label: "Silberner Stern" };
+    if (points >= MAI_STAR_THRESHOLDS.brown)
+      return { level: "brown", label: "Brauner Stern" };
     return null;
   }
 
@@ -71,26 +69,6 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     }
   }
 
-  function loadBestStar() {
-    try {
-      return window.localStorage.getItem(BEST_STAR_KEY) || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function saveBestStar(level) {
-    if (!level) return;
-    try {
-      const prev = loadBestStar();
-      if (!prev || starRank(level) > starRank(prev)) {
-        window.localStorage.setItem(BEST_STAR_KEY, level);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
   let animationFrame = null;
   let countdownInterval = null;
   let isRunning = false;
@@ -98,7 +76,6 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
   let timeLeft = MAI_GAME_DURATION;
   let score = 0;
   let highscore = loadHighscore();
-  let bestStar = loadBestStar();
 
   let speedMultiplier = 1;
   let spawnCooldown = 0.4;
@@ -106,6 +83,14 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
 
   const wafels = [];
   const crumbs = [];
+
+  // --- Waffel-Image-Sprite laden ---
+  const waffleImg = new Image();
+  waffleImg.src = "assets/img/waffel.png";
+  let waffleImageLoaded = false;
+  waffleImg.onload = () => {
+    waffleImageLoaded = true;
+  };
 
   container.innerHTML = "";
   container.classList.add("maiwaffel-container-active");
@@ -120,8 +105,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     <div class="maiwaffel-title">🎯 Maiswaffel schießen</div>
     <div class="maiwaffel-stats">
       <span class="maiwaffel-timer">⏳ ${timeLeft.toFixed(1)}s</span>
-      <span class="maiwaffel-score">Punkte: 0 / ${MAI_TARGET_SCORE}</span>
-      <span class="maiwaffel-highscore">Highscore: ${highscore}</span>
+      <span class="maiwaffel-score">🎯 0 / ${MAI_TARGET_SCORE}</span>
+      <span class="maiwaffel-highscore">★ ${highscore}</span>
     </div>
   `;
 
@@ -144,10 +129,10 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
   introOverlay.className = "maiwaffel-overlay maiwaffel-start-overlay";
   introOverlay.innerHTML = `
     <div class="maiwaffel-overlay-box">
-      <div class="maiwaffel-overlay-title">Winterliches Duck-Hunt</div>
+      <div class="maiwaffel-overlay-title">Winterliches Maiswaffel-Shooting</div>
       <div class="maiwaffel-overlay-sub">
         Ziele mit der Maus auf die fliegenden Maiswaffeln und klicke zum Schießen.
-        Fehlschüsse kosten Zeit – goldene bringen Bonuspunkte.
+        Fehlschüsse kosten etwas Zeit – goldene Maiswaffeln geben extra viele Punkte ✨
       </div>
     </div>
   `;
@@ -194,7 +179,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     snowDots = Array.from({ length: 140 }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: Math.random() * 2.2 + 0.6
+      r: Math.random() * 2.2 + 0.6,
     }));
   }
 
@@ -220,8 +205,22 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     ctx.fillStyle = "#e4f3ff";
     ctx.beginPath();
     ctx.moveTo(0, h * 0.7);
-    ctx.bezierCurveTo(w * 0.2, h * 0.65, w * 0.25, h * 0.75, w * 0.45, h * 0.72);
-    ctx.bezierCurveTo(w * 0.65, h * 0.68, w * 0.75, h * 0.8, w, h * 0.74);
+    ctx.bezierCurveTo(
+      w * 0.2,
+      h * 0.65,
+      w * 0.25,
+      h * 0.75,
+      w * 0.45,
+      h * 0.72
+    );
+    ctx.bezierCurveTo(
+      w * 0.65,
+      h * 0.68,
+      w * 0.75,
+      h * 0.8,
+      w,
+      h * 0.74
+    );
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
@@ -230,8 +229,22 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     ctx.fillStyle = "#d4ebff";
     ctx.beginPath();
     ctx.moveTo(0, h * 0.82);
-    ctx.bezierCurveTo(w * 0.2, h * 0.78, w * 0.3, h * 0.86, w * 0.55, h * 0.83);
-    ctx.bezierCurveTo(w * 0.72, h * 0.8, w * 0.82, h * 0.9, w, h * 0.88);
+    ctx.bezierCurveTo(
+      w * 0.2,
+      h * 0.78,
+      w * 0.3,
+      h * 0.86,
+      w * 0.55,
+      h * 0.83
+    );
+    ctx.bezierCurveTo(
+      w * 0.72,
+      h * 0.8,
+      w * 0.82,
+      h * 0.9,
+      w,
+      h * 0.88
+    );
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
@@ -242,15 +255,19 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.width / dpr;
     const h = canvas.height / dpr;
-    const isGolden = forceGolden || Math.random() < 0.18;
-    const radius = isGolden ? 28 + Math.random() * 10 : 18 + Math.random() * 18;
+    const isGolden = forceGolden || Math.random() < 0.2;
+    // etwas größere Waffeln
+    const radius = isGolden
+      ? 32 + Math.random() * 12
+      : 26 + Math.random() * 14;
     const fromLeft = Math.random() > 0.5;
-    const y = h * (0.18 + Math.random() * 0.4);
+    const y = h * (0.16 + Math.random() * 0.38);
+    // schneller & randomer
     const speed =
-      (MAI_BASE_SPEED + Math.random() * 120) *
+      (MAI_BASE_SPEED + Math.random() * 180) *
       speedMultiplier *
-      (isGolden ? 1.3 : 1);
-    const drift = (Math.random() * 40 - 20) * speedMultiplier;
+      (isGolden ? 1.18 : 1);
+    const drift = (Math.random() * 120 - 60) * speedMultiplier;
 
     wafels.push({
       x: fromLeft ? -radius - 10 : w + radius + 10,
@@ -260,12 +277,12 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
       radius,
       isGolden,
       wobble: Math.random() * Math.PI * 2,
-      wobbleSpeed: 2 + Math.random() * 1.5
+      wobbleSpeed: 2 + Math.random() * 1.5,
     });
   }
 
   function spawnInitial() {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       spawnWafel(false);
     }
   }
@@ -275,14 +292,14 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     const w = canvas.width / dpr;
     const h = canvas.height / dpr;
 
-    speedMultiplier += dt * 0.025;
+    speedMultiplier += dt * 0.03;
     spawnCooldown -= dt;
 
     wafels.forEach((wafel) => {
       wafel.x += wafel.vx * dt;
       wafel.y += wafel.vy * dt;
       wafel.wobble += wafel.wobbleSpeed * dt;
-      wafel.vy += Math.sin(wafel.wobble) * 2;
+      wafel.vy += Math.sin(wafel.wobble) * 3;
     });
 
     for (let i = wafels.length - 1; i >= 0; i--) {
@@ -290,14 +307,17 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
       if (wafel.y < h * 0.08 || wafel.y > h * 0.65) {
         wafel.vy *= -0.9;
       }
-      if (wafel.x < -wafel.radius - 40 || wafel.x > w + wafel.radius + 40) {
+      if (
+        wafel.x < -wafel.radius - 60 ||
+        wafel.x > w + wafel.radius + 60
+      ) {
         wafels.splice(i, 1);
       }
     }
 
-    if (spawnCooldown <= 0 && wafels.length < 3) {
+    if (spawnCooldown <= 0 && wafels.length < 4) {
       spawnWafel();
-      spawnCooldown = 0.55 + Math.random() * 0.35;
+      spawnCooldown = 0.45 + Math.random() * 0.30;
     }
 
     for (let i = crumbs.length - 1; i >= 0; i--) {
@@ -310,51 +330,127 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     }
   }
 
+  // Floating-Score-Popup
+  function showHitPopup(x, y, points, isGolden) {
+    const popup = document.createElement("div");
+    popup.textContent = isGolden ? `+${points} ✨` : `+${points}`;
+    popup.style.position = "absolute";
+    popup.style.left = x + "px";
+    popup.style.top = y + "px";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.fontSize = "0.9rem";
+    popup.style.fontWeight = "700";
+    popup.style.color = isGolden ? "#fde047" : "#f9fafb";
+    popup.style.textShadow = "0 0 6px rgba(0,0,0,0.7)";
+    popup.style.pointerEvents = "none";
+    popup.style.opacity = "1";
+    popup.style.transition =
+      "transform 0.25s ease-out, opacity 0.25s ease-out";
+
+    canvasWrap.appendChild(popup);
+
+    requestAnimationFrame(() => {
+      popup.style.transform = "translate(-50%, -120%)";
+      popup.style.opacity = "0";
+    });
+
+    setTimeout(() => {
+      popup.remove();
+    }, 270);
+  }
+
+  function flashScore() {
+    const scoreEl = header.querySelector(".maiwaffel-score");
+    if (!scoreEl) return;
+    scoreEl.style.transition =
+      "background-color 0.18s ease-out, transform 0.18s ease-out";
+    scoreEl.style.backgroundColor = "rgba(34,197,94,0.25)";
+    scoreEl.style.transform = "scale(1.05)";
+    setTimeout(() => {
+      scoreEl.style.backgroundColor = "";
+      scoreEl.style.transform = "";
+    }, 180);
+  }
+
   function draw() {
     drawBackground();
 
     wafels.forEach((wafel) => {
-      const grd = ctx.createRadialGradient(
-        wafel.x - wafel.radius * 0.2,
-        wafel.y - wafel.radius * 0.3,
-        wafel.radius * 0.3,
-        wafel.x,
-        wafel.y,
-        wafel.radius
-      );
-      if (wafel.isGolden) {
-        grd.addColorStop(0, "#fff1b8");
-        grd.addColorStop(0.5, "#ffd56d");
-        grd.addColorStop(1, "#e1a400");
-      } else {
-        grd.addColorStop(0, "#ffe7c7");
-        grd.addColorStop(0.5, "#f5cfa3");
-        grd.addColorStop(1, "#d6a56f");
-      }
-      ctx.fillStyle = grd;
-      ctx.beginPath();
-      ctx.arc(wafel.x, wafel.y, wafel.radius, 0, Math.PI * 2);
-      ctx.fill();
+      const size = wafel.radius * 2;
 
-      ctx.strokeStyle = wafel.isGolden
-        ? "rgba(255,230,120,0.8)"
-        : "rgba(240,180,120,0.6)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const angle = (Math.PI * 2 * i) / 10 + wafel.wobble * 0.1;
-        const inner = wafel.radius * 0.55;
-        const outer = wafel.radius * 0.95;
-        ctx.moveTo(
-          wafel.x + Math.cos(angle) * inner,
-          wafel.y + Math.sin(angle) * inner
+      if (waffleImageLoaded) {
+        ctx.save();
+        ctx.translate(wafel.x, wafel.y);
+
+        // Goldene Waffel: weicher, runder Halo hinter der Waffel
+        if (wafel.isGolden) {
+          const haloGrad = ctx.createRadialGradient(
+            0,
+            0,
+            size * 0.1,
+            0,
+            0,
+            size * 0.7
+          );
+          haloGrad.addColorStop(0, "rgba(253,224,71,0.7)");
+          haloGrad.addColorStop(1, "rgba(253,224,71,0)");
+          ctx.fillStyle = haloGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, size * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Basis-Waffelbild
+        ctx.drawImage(waffleImg, -size / 2, -size / 2, size, size);
+
+        // Goldene Waffel: sanfte Radial-Tönung, in Kreis geclippt – kein Block mehr
+        if (wafel.isGolden) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+          ctx.clip();
+
+          const tintGrad = ctx.createRadialGradient(
+            0,
+            0,
+            size * 0.1,
+            0,
+            0,
+            size / 2
+          );
+          tintGrad.addColorStop(0, "rgba(255,255,255,0.35)");
+          tintGrad.addColorStop(1, "rgba(253,224,71,0.15)");
+          ctx.fillStyle = tintGrad;
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+      } else {
+        // Fallback: einfache Vektor-Grafik
+        const grd = ctx.createRadialGradient(
+          wafel.x - wafel.radius * 0.2,
+          wafel.y - wafel.radius * 0.3,
+          wafel.radius * 0.3,
+          wafel.x,
+          wafel.y,
+          wafel.radius
         );
-        ctx.lineTo(
-          wafel.x + Math.cos(angle) * outer,
-          wafel.y + Math.sin(angle) * outer
-        );
+        if (wafel.isGolden) {
+          grd.addColorStop(0, "#fff1b8");
+          grd.addColorStop(0.5, "#ffd56d");
+          grd.addColorStop(1, "#e1a400");
+        } else {
+          grd.addColorStop(0, "#ffe7c7");
+          grd.addColorStop(0.5, "#f5cfa3");
+          grd.addColorStop(1, "#d6a56f");
+        }
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(wafel.x, wafel.y, wafel.radius, 0, Math.PI * 2);
+        ctx.fill();
       }
-      ctx.stroke();
     });
 
     crumbs.forEach((c) => {
@@ -382,7 +478,8 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
     const scoreEl = header.querySelector(".maiwaffel-score");
     const hsEl = header.querySelector(".maiwaffel-highscore");
     if (timerEl) timerEl.textContent = `⏳ ${timeLeft.toFixed(1)}s`;
-    if (scoreEl) scoreEl.textContent = `Punkte: ${score} / ${MAI_TARGET_SCORE}`;
+    if (scoreEl)
+      scoreEl.textContent = `Punkte: ${score} / ${MAI_TARGET_SCORE}`;
     if (hsEl) hsEl.textContent = `Highscore: ${highscore}`;
   }
 
@@ -393,7 +490,9 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
 
   function playCrunch(isGolden) {
     try {
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ac = new AC();
       const osc = ac.createOscillator();
       const gain = ac.createGain();
       const noise = ac.createBufferSource();
@@ -405,9 +504,15 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
       noise.buffer = buffer;
       noise.loop = false;
       osc.frequency.setValueAtTime(isGolden ? 680 : 520, ac.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ac.currentTime + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(
+        120,
+        ac.currentTime + 0.18
+      );
       gain.gain.setValueAtTime(0.35, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.22);
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        ac.currentTime + 0.22
+      );
       osc.connect(gain);
       noise.connect(gain);
       gain.connect(ac.destination);
@@ -432,7 +537,7 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
         color: isGolden
           ? "rgba(255,220,120,0.9)"
           : "rgba(244,201,139,0.9)",
-        life: 0.8 + Math.random() * 0.4
+        life: 0.8 + Math.random() * 0.4,
       });
     }
   }
@@ -448,7 +553,10 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
       const wafel = wafels[i];
       const dx = wafel.x - x;
       const dy = wafel.y - y;
-      if (Math.hypot(dx, dy) <= crosshairRadius + wafel.radius * 0.6) {
+      if (
+        Math.hypot(dx, dy) <=
+        crosshairRadius + wafel.radius * 0.6
+      ) {
         hitIndex = i;
         break;
       }
@@ -456,17 +564,22 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
 
     if (hitIndex >= 0) {
       const [hit] = wafels.splice(hitIndex, 1);
-      score += hit.isGolden ? MAI_GOLDEN_BONUS : 1;
+      const gained = hit.isGolden ? MAI_GOLDEN_BONUS : 1;
+      score += gained;
       addCrumbs(hit.x, hit.y, hit.isGolden);
       playCrunch(hit.isGolden);
       updateUi();
-      // KEIN frühzeitiges finish mehr – Bewertung erst, wenn die Zeit vorbei ist
+      flashScore();
+      showHitPopup(hit.x, hit.y, gained, hit.isGolden);
     } else {
+      // MISS: Zeit verliert wieder
       timeLeft = Math.max(0, timeLeft - MAI_MISS_TIME_PENALTY);
-      score = Math.max(0, score - 1);
       updateUi();
       canvasWrap.classList.add("maiwaffel-miss");
-      setTimeout(() => canvasWrap.classList.remove("maiwaffel-miss"), 140);
+      setTimeout(
+        () => canvasWrap.classList.remove("maiwaffel-miss"),
+        120
+      );
       if (timeLeft <= 0) finish(score >= MAI_TARGET_SCORE);
     }
   }
@@ -506,21 +619,16 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
 
     let starText = "";
     if (won) {
-      // Star-Berechnung nur hier, wenn Zeit vorbei
-      const newStar = determineStarFromScore(score);
-      if (newStar) {
-        const prevRank = starRank(bestStar);
-        const newRank = starRank(newStar);
-        if (newRank > prevRank) {
-          bestStar = newStar;
-          saveBestStar(bestStar);
-          onWin({ level: newStar, label: starLabel(newStar) });
-        } else if (!bestStar) {
-          bestStar = newStar;
-          saveBestStar(bestStar);
-          onWin({ level: newStar, label: starLabel(newStar) });
+      const reward = determineRewardFromScore(score);
+      if (reward) {
+        starText = `<br/>Belohnung: <strong>${reward.label}</strong>`;
+        // Sternen-System wie in den anderen Games:
+        // Advent-Framework kümmert sich um Popups / Speicherung
+        try {
+          onWin(reward);
+        } catch (e) {
+          console.error("maiswaffel_shooting onWin error:", e);
         }
-        starText = `<br/>Belohnung: <strong>${starLabel(newStar)}</strong>`;
       }
       resultHtml += `<br/><br/>Du hast gewonnen und darfst das Geschenk hinter Tür 5 öffnen!${starText}`;
     } else {
@@ -570,13 +678,28 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
   canvasWrap.addEventListener("pointermove", moveCrosshair);
   canvasWrap.addEventListener("click", handleShot);
 
-  root.addEventListener("mouseleave", () => crosshair.classList.add("hidden"));
+  root.addEventListener("mouseleave", () =>
+    crosshair.classList.add("hidden")
+  );
   root.addEventListener("mouseenter", () => {
     if (isRunning) crosshair.classList.remove("hidden");
   });
 
-  startButton.addEventListener("click", startGame);
-  result.querySelector(".maiwaffel-restart")?.addEventListener("click", startGame);
+  // WICHTIG: Klicks auf Start/Restart dürfen keinen Schuss auslösen
+  startButton.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    ev.preventDefault();
+    startGame();
+  });
+
+  const restartBtn = result.querySelector(".maiwaffel-restart");
+  if (restartBtn) {
+    restartBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      startGame();
+    });
+  }
 
   resizeCanvas();
   resetState(false);
@@ -593,7 +716,10 @@ window.AdventGames["maiswaffel_shooting"] = function initMaiswaffelShooting(
       window.removeEventListener("resize", resizeCanvas);
       canvasWrap.removeEventListener("pointermove", moveCrosshair);
       canvasWrap.removeEventListener("click", handleShot);
-      container.classList.remove("maiwaffel-container-active", "running");
-    }
+      container.classList.remove(
+        "maiwaffel-container-active",
+        "running"
+      );
+    },
   };
 };

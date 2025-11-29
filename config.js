@@ -3,10 +3,10 @@
 // von den Kalendertüren über gameId referenziert.
 
 const ADVENT_CONFIG = {
-  recipientName: "sunny <3",
+  recipientName: "meine Celine",
   missionIntro:
-    "Bevor du deine echte Adventstür öffnen darfst, musst du hie...innen. Jeden Tag gibt es eine kleine Challenge nur für dich. ♥",
-  debugMode: true,
+    "Bevor du deine echte Adventstür öffnen darfst, musst du die tägliche Challenge bestehen ♥",
+  debugMode: false,
   year: null,
 
   // Zentrale Spiele-Definitionen: hier neue Spiele eintragen.
@@ -41,11 +41,97 @@ const ADVENT_CONFIG = {
       script: "games/game6_capybara_sprint.js",
       style: null
     },
-    wire_runner_7: {
+      wire_runner_7: {
       id: "wire_runner_7",
       script: "games/game7_wire_runner.js",
       style: null
+    },
+    brick_heart_pong: {
+      id: "brick_heart_pong",
+      script: "games/game8_brick_heart_pong.js",
+      style: null
+    },
+    akame_quiz_9: {
+      id: "akame_quiz_9",
+      script: "games/game9_akame_quiz.js",
+      style: null
+    },
+    guitar_terms_10: {
+      id: "guitar_terms_10",
+      script: "games/game10_guitar_terms.js",
+      style: null
+    },
+    lego_plant_11: {
+      id: "lego_plant_11",
+      script: "games/game11_lego_plant.js",
+      style: null
+    },
+    chai_12: {
+      id: "chai_12",
+      script: "games/game12_chai.js",
+      style: null
+    },
+    skyjo_13: {
+      id: "skyjo_13",
+      script: "games/game13_skyjo.js",
+      style: null
+    },
+    socks_14: {
+      id: "socks_14",
+      script: "games/game14_socks.js",
+      style: null
+    },
+    snow_15: {
+      id: "snow_15",
+      script: "games/game15_snow.js",
+      style: null
+    },
+    candy_16: {
+      id: "candy_16",
+      script: "games/game16_candy.js",
+      style: null
+    },
+    nail_17: {
+      id: "nail_17",
+      script: "games/game17_nails.js",
+      style: null
+    },
+    sort_18: {
+      id: "nail_18",
+      script: "games/game18_sort.js",
+      style: null
+    },
+    keks_19: {
+      id: "keks_19",
+      script: "games/game19_keks.js",
+      style: null
+    },
+    guitar_20: {
+      id: "guitar_20",
+      script: "games/game20_guitar.js",
+      style: null
+    },
+    game21: {
+      id: "game21",
+      script: "games/game21.js",
+      style: null
+    },
+    game22: {
+      id: "game22",
+      script: "games/game22.js",
+      style: null
+    },
+    game23: {
+      id: "game23",
+      script: "games/game23.js",
+      style: null
+    },
+    game24: {
+      id: "game24",
+      script: "games/game24.js",
+      style: null
     }
+
   },
 
   // Türen: verknüpfen einen Kalendertag mit einem Spiel
@@ -53,7 +139,7 @@ const ADVENT_CONFIG = {
     {
       day: 1,
       title: "Wärmflaschen Umfüllen Ad",
-      giftLabel: "Im echten Kalender: Wärmflasche",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -62,7 +148,7 @@ const ADVENT_CONFIG = {
     {
       day: 2,
       title: "Lippenbalsam-auftragen-test",
-      giftLabel: "Im echten Kalender: Lippenpflege",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -71,7 +157,7 @@ const ADVENT_CONFIG = {
     {
       day: 3,
       title: "Schnelle Hände – Reaktionsklecks",
-      giftLabel: "Im echten Kalender: noch geheim 😉",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -80,7 +166,7 @@ const ADVENT_CONFIG = {
     {
       day: 4,
       title: "Lese-Challenge mit Juli",
-      giftLabel: "Im echten Kalender: Zeit mit Juli <3",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -89,7 +175,7 @@ const ADVENT_CONFIG = {
     {
       day: 5,
       title: "Maiswaffel schießen",
-      giftLabel: "Im echten Kalender: crunchy Überraschung",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -98,7 +184,7 @@ const ADVENT_CONFIG = {
     {
       day: 6,
       title: "Nikolaus-Capybara-Sprint",
-      giftLabel: "Im echten Kalender: weihnachtliche Überraschung",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
@@ -107,11 +193,167 @@ const ADVENT_CONFIG = {
     {
       day: 7,
       title: "Golden Wire Runner",
-      giftLabel: "Im echten Kalender: tbd",
+      giftLabel: "",
       story: "",
       memory: "",
       magicLetter: "",
       gameId: "wire_runner_7"
+    },
+      {
+      day: 8,
+      title: "Brick Heart Pong",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "brick_heart_pong"
     }
+    ,
+    {
+      day: 9,
+      title: "Akame Ga Kill Quiz",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "akame_quiz_9"
+    },
+    {
+      day: 10,
+      title: "Wofür das wohl gut ist?",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "guitar_terms_10"
+    },
+    {
+      day: 11,
+      title: "Zusammen wachsen",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "lego_plant_11"
+    },
+    {
+      day: 12,
+      title: "Spicy Chai",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "chai_12"
+    },
+    {
+      day: 13,
+      title: "Skyjo Duell",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "skyjo_13"
+    },
+    {
+      day: 14,
+      title: "kuschelig",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "socks_14"
+    },
+     {
+      day: 15,
+      title: "Malen nach Zahlen",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "snow_15"
+    },
+     {
+      day: 16,
+      title: "Candy crush",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "candy_16"
+    },
+    {
+      day: 17,
+      title: "Deine wundervollen Nägel",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "nail_17"
+    },
+    {
+      day: 18,
+      title: "Einkauf einsortieren",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "sort_18"
+    },
+    {
+      day: 19,
+      title: "Kekseeee",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "keks_19"
+    },
+    {
+      day: 20,
+      title: "My cute musician",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "guitar_20"
+    }
+    ,
+     {
+      day: 21,
+      title: "Part 1/3 Loveseries",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "game21"
+    },
+     {
+      day: 22,
+      title: "Part 2/3 Loveseries",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "game22"
+    },
+     {
+      day: 23,
+      title: "Part 3/3 Loveseries",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "game23"
+    },
+     {
+      day: 24,
+      title: "Merry Christmas Racing",
+      giftLabel: "",
+      story: "",
+      memory: "",
+      magicLetter: "",
+      gameId: "game24"
+    }
+
   ]
 };

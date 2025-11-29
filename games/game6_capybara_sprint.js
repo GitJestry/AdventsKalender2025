@@ -21,9 +21,9 @@ const CAPY_BOT_FINISH_TIMES = [15.0, 15.7, 16.5, 17.3, 16.3];
 // diff = bestBotTime - playerTime
 const CAPY_STAR_DELTA_THRESHOLDS = {
   brown: 0.001, // knapp schneller als der schnellste Bot
-  silver: 0.6,
-  gold: 1.2,
-  red: 2.0
+  silver: 1.0,
+  gold: 2.0,
+  red: 3.2
 };
 
 window.AdventGames = window.AdventGames || {};
@@ -86,7 +86,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     if (diff >= CAPY_STAR_DELTA_THRESHOLDS.gold) return "gold";
     if (diff >= CAPY_STAR_DELTA_THRESHOLDS.silver) return "silver";
 
-    // gewonnen, aber weniger als 0.6s Vorsprung → brauner Stern
     return "brown";
   }
 
@@ -110,20 +109,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   };
 
   let bestStarLevel = loadBestStar();
-
-  // wird später nach DOM-Bau gesetzt
-  let bestStarPill = null;
-
-  function renderBestStar() {
-    if (!bestStarPill) return;
-    if (!bestStarLevel) {
-      bestStarPill.textContent = "";
-      bestStarPill.classList.add("hidden");
-    } else {
-      bestStarPill.textContent = `⭐ ${starLabel(bestStarLevel)}`;
-      bestStarPill.classList.remove("hidden");
-    }
-  }
 
   // --- DOM-Struktur aufbauen ---
 
@@ -181,18 +166,20 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   container.appendChild(root);
 
   const keyHint = header.querySelector(".capy-key-hint");
-  bestStarPill = header.querySelector(".capy-best-star-pill");
+  let bestStarPill = header.querySelector(".capy-best-star-pill");
   const restartHeaderBtn = header.querySelector(".capy-restart-header");
 
   // Start-Overlay
   const startOverlay = document.createElement("div");
   startOverlay.className = "capy-overlay";
   startOverlay.innerHTML = `
-    <div class="box">
-      <h3>Nikolaus bereit?</h3>
-      <p><kbd>Leertaste</kbd> für den Start-Countdown.</p>
-      <p>Danach im Rhythmus <kbd>F</kbd> – <kbd>H</kbd> – <kbd>F</kbd> – <kbd>H</kbd> drücken, um Tempo aufzubauen.</p>
-      <p>Du bist das Capy mit Mütze – schlag die Neon-Bots an der Ziellinie.</p>
+    <div class="box capy-start-box">
+      <h3>Capy-Sprint</h3>
+      <ul class="capy-start-hints">
+        <li>␣ – Start-Countdown</li>
+        <li><kbd>F</kbd> / <kbd>H</kbd> – abwechselnd drücken = Speed</li>
+        <li>🎅 Du bist das Capy mit Mütze</li>
+      </ul>
     </div>
   `;
   root.appendChild(startOverlay);
@@ -224,6 +211,21 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   const rankings = resultOverlay.querySelector(".capy-rankings");
   const closeResultBtn = resultOverlay.querySelector(".capy-close-result");
 
+  // --- Helper: Best-Star-Anzeige (nur optisch) ---
+
+  function updateBestStarPill() {
+    if (!bestStarPill) return;
+    if (!bestStarLevel) {
+      bestStarPill.textContent = "";
+      bestStarPill.style.display = "none";
+      return;
+    }
+    bestStarPill.style.display = "inline-flex";
+    bestStarPill.textContent = ``;
+  }
+
+  updateBestStarPill();
+
   // --- Lane-/Runner-Aufbau ---
 
   function createLane(name, isPlayer, label) {
@@ -252,7 +254,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   function initLanes() {
     lanes = [];
 
-    // Spieler in Lane 1
     const playerLane = createLane("Du", true, "DU");
     lanes.push({
       name: "Du",
@@ -264,14 +265,13 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       runnerEl: playerLane.runnerEl
     });
 
-    // Bots in den weiteren Lanes
     for (let i = 0; i < CAPY_BOT_COUNT; i++) {
       const label = `BOT-${i + 1}`;
       const lane = createLane(`Capybot ${i + 1}`, false, label);
       const baseTime =
         CAPY_BOT_FINISH_TIMES[i] ||
         CAPY_BOT_FINISH_TIMES[CAPY_BOT_FINISH_TIMES.length - 1];
-      const speed = CAPY_TRACK_LENGTH / baseTime; // konstante Geschwindigkeit
+      const speed = CAPY_TRACK_LENGTH / baseTime;
 
       lanes.push({
         name: `Capybot ${i + 1}`,
@@ -298,11 +298,8 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     const startRect = startLine.getBoundingClientRect();
     const finishRect = finishLine.getBoundingClientRect();
 
-    // X-Positionen relativ zur Lane
     const startX = startRect.left - laneRect.left;
     const finishX = finishRect.left - laneRect.left;
-
-    // nutzbare Strecke zwischen Start- und Ziellinie (linke Kante)
     const usable = finishX - startX;
 
     geom.startOffsetPx = startX;
@@ -374,7 +371,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     const playerLane = lanes.find((l) => l.isPlayer);
     const bots = lanes.filter((l) => !l.isPlayer);
 
-    // Ranking nach Finishzeit oder Fortschritt
     const ranking = lanes
       .slice()
       .sort((a, b) => {
@@ -396,7 +392,7 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     });
 
     if (winnerLane.isPlayer && playerLane && playerLane.finishTimeSec != null) {
-      // ⭐ Sterne werden jetzt gegen die tatsächliche Bestzeit der Bots aus DIESEM Lauf berechnet
+      // Bestzeit der Bots aus diesem Lauf
       const finishedBots = bots.filter((b) => b.finishTimeSec != null);
       const bestBotTime =
         finishedBots.length > 0
@@ -410,25 +406,28 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       let unlockedText = "";
 
       if (runLevel) {
-        // Nie einen schlechteren Stern melden als den bereits besten
-        let finalLevel = runLevel;
+        // Stern dieser Runde (nur dieser Lauf)
+        const runLabel = starLabel(runLevel);
 
-        if (bestStarLevel && starRank(bestStarLevel) > starRank(runLevel)) {
-          finalLevel = bestStarLevel;
-        } else {
+        // Lokalen Beststern nur für Anzeige speichern (globales Downgrade verhindert der Kalender selbst)
+        if (!bestStarLevel || starRank(runLevel) > starRank(bestStarLevel)) {
           bestStarLevel = runLevel;
           saveBestStar(runLevel);
-          renderBestStar();
         }
+        updateBestStarPill();
 
-        unlockedText = ` – ${starLabel(finalLevel)}`;
+        const reward = { level: runLevel, label: runLabel };
+        unlockedText = ` – ${runLabel}`;
 
+        // Nach außen nur den Stern dieses Laufs melden;
+        // der Kalender speichert ohnehin immer den besten Stern und stuft nicht herunter.
         try {
-          onWin({ level: finalLevel, label: starLabel(finalLevel) });
+          onWin(reward);
         } catch (e) {
           console.error("onWin callback error", e);
         }
       }
+
 
       const diff = bestBotTime - playerLane.finishTimeSec;
       const diffText =
@@ -575,16 +574,13 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     const finishRect = finishLine.getBoundingClientRect();
     const finishX = finishRect.left + finishRect.width / 2;
 
-    // Bewegung & Zielerkennung
     lanes.forEach((lane) => {
       if (lane.finished) {
-        // bereits fertige Läufer bleiben an ihrer Position
         applyRunnerPosition(lane);
         return;
       }
 
       if (lane.isPlayer) {
-        // Geschwindigkeit fällt wieder ab
         lane.speed = Math.max(0, lane.speed - CAPY_PLAYER_FRICTION * dt);
         const v = CAPY_PLAYER_BASE_SPEED + lane.speed;
         lane.progress += (v * dt) / CAPY_TRACK_LENGTH;
@@ -592,7 +588,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
         lane.progress += (lane.speed * dt) / CAPY_TRACK_LENGTH;
       }
 
-      // Progress im sinnvollen Bereich halten
       if (lane.progress < 0) lane.progress = 0;
       if (lane.progress > 1.2) lane.progress = 1.2;
 
@@ -601,7 +596,6 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
       const runnerRect = lane.runnerEl.getBoundingClientRect();
       const runnerFrontX = runnerRect.right;
 
-      // Ziellinie erreicht, sobald die "Nase" die Mitte der Linie schneidet
       if (runnerFrontX >= finishX) {
         lane.finished = true;
         lane.finishTimeSec = elapsedSec;
@@ -613,13 +607,10 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
     const bots = lanes.filter((l) => !l.isPlayer);
 
     if (!playerLane) {
-      // sollte nie passieren, aber safety
       raceFinished = true;
       return;
     }
 
-    // 1. Wenn der Spieler NICHT im Ziel ist, aber ein Bot schon:
-    //    → Bot gewinnt sofort, Rennen vorbei.
     if (!playerLane.finished) {
       const firstFinishedBot = bots.find((b) => b.finished);
       if (firstFinishedBot) {
@@ -627,20 +618,17 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
         return;
       }
     } else {
-      // 2. Spieler ist im Ziel: erst prüfen, ob ein Bot evtl. früher im Ziel war
       const finishedBots = bots.filter((b) => b.finishTimeSec != null);
       if (finishedBots.length > 0) {
         const fastestBot = finishedBots.reduce((best, cur) =>
           cur.finishTimeSec < best.finishTimeSec ? cur : best
         );
         if (fastestBot.finishTimeSec < playerLane.finishTimeSec) {
-          // Safety: falls ein Bot doch früher war → Spieler verliert
           finishRace(fastestBot);
           return;
         }
       }
 
-      // 3. Spieler ist vorne, aber wir warten, bis ALLE Bots im Ziel sind
       const allBotsFinished = bots.every((b) => b.finished);
       if (allBotsFinished) {
         finishRace(playerLane);
@@ -672,13 +660,11 @@ window.AdventGames["capybara_sprint"] = function initCapybaraSprint(container, o
   window.addEventListener("keydown", keyHandler);
   window.addEventListener("resize", handleResize);
 
-  // Erste Geometrie-Berechnung nach Layout
   requestAnimationFrame(() => {
     updateGeometry();
     applyAllRunnerPositions();
   });
 
-  renderBestStar();
   resetRace();
 
   return {

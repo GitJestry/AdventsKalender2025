@@ -122,8 +122,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
   const title = document.createElement("div");
   title.className = "warm-game-title";
-  title.textContent =
-    "Sortiere die glitzernden Farben in die Wärmflaschen. Am Ende soll jede gefüllte Flasche komplett mit nur einer Farbe gefüllt sein.";
+  title.textContent = "🧴 Wärmflaschen sortieren";
 
   const controls = document.createElement("div");
   controls.className = "warm-game-controls";
@@ -148,8 +147,7 @@ window.AdventGames["warmflaschen_sort"] = function initWarmflaschenGame(containe
 
   const status = document.createElement("div");
   status.className = "warm-game-status";
-  status.textContent =
-    "Tippe erst eine Flasche zum Aufnehmen an, dann eine andere zum Eingießen. Jede volle Flasche soll am Ende nur eine Farbe enthalten.";
+  status.textContent = "🧴 Flasche anklicken → aufnehmen • zweite Flasche → umfüllen ✨ Eine Farbe pro Flasche.";
 
   root.appendChild(header);
   root.appendChild(grid);

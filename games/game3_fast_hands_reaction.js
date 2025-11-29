@@ -3,20 +3,19 @@
 // - ENTER: Runde starten, auf Klecks warten
 // - SPACE: beim Klecks so schnell wie möglich drücken
 // - Streak wird erst beim Ende bewertet (Fehler / zu spät / zu langsam)
-//   3  => Braun
-//   4  => Silber
-//   5–7 => Gold
-//   >=8 => Rot
-// - Highscore & bester Stern in localStorage, kein Downgrade
+//   Sterne-Logik ist unverändert.
 
 window.AdventGames = window.AdventGames || {};
 
-window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(container, options) {
+window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(
+  container,
+  options
+) {
   const opts = options || {};
   const onWin = typeof opts.onWin === "function" ? opts.onWin : () => {};
 
   // Streak-Logik
-  const REQUIRED_STREAK_TO_UNLOCK = 3;
+  const REQUIRED_STREAK_TO_UNLOCK = 2;
 
   // Reaktionszeit
   const MAX_REACTION_SECONDS = 0.35;
@@ -26,29 +25,8 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   const MIN_WAIT_MS = 3000;
   const MAX_WAIT_MS = 6000;
 
-  // Highscore / Persistenz
+  // Highscore / Persistenz (nur Streak, Sterne über Advent-System)
   const STORAGE_KEY_STREAK = "advent_fast_hands_best_streak";
-  const STORAGE_KEY_STAR = "advent_fast_hands_best_star";
-  const STAR_ORDER = ["brown", "silver", "gold", "red"];
-
-  function starRank(level) {
-    const idx = STAR_ORDER.indexOf(level);
-    return idx === -1 ? 0 : idx + 1;
-  }
-
-  function starLabelForLevel(level) {
-    switch (level) {
-      case "red":
-        return "Roter Stern";
-      case "gold":
-        return "Goldener Stern";
-      case "silver":
-        return "Silberner Stern";
-      case "brown":
-      default:
-        return "Brauner Stern";
-    }
-  }
 
   function loadBestStreak() {
     try {
@@ -68,31 +46,12 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     }
   }
 
-  function loadBestStar() {
-    try {
-      return window.localStorage.getItem(STORAGE_KEY_STAR) || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function saveBestStar(level) {
-    if (!level) return;
-    try {
-      const prev = loadBestStar();
-      if (!prev || starRank(level) > starRank(prev)) {
-        window.localStorage.setItem(STORAGE_KEY_STAR, level);
-      }
-    } catch {
-      // kann ignoriert werden
-    }
-  }
-
+  // *** Sterne-Berechnung UNVERÄNDERT lassen ***
   function determineRewardFromStreak(streak) {
-    if (streak >= 8) return { level: "red", label: "Roter Stern" };
-    if (streak >= 5) return { level: "gold", label: "Goldener Stern" };
-    if (streak >= 4) return { level: "silver", label: "Silberner Stern" };
-    if (streak >= 3) return { level: "brown", label: "Brauner Stern" };
+    if (streak >= 6) return { level: "red", label: "Roter Stern" };
+    if (streak >= 4) return { level: "gold", label: "Goldener Stern" };
+    if (streak >= 3) return { level: "silver", label: "Silberner Stern" };
+    if (streak >= 2) return { level: "brown", label: "Brauner Stern" };
     return null;
   }
 
@@ -104,8 +63,6 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   let bestReaction = null;
   let bestStreakSession = 0;
   let bestStreakEver = loadBestStreak();
-  let bestStarLevel = loadBestStar();
-  let lastNotifiedStarLevel = bestStarLevel || null;
 
   let signalStartTime = null;
   let nextSignalTimeoutId = null;
@@ -214,15 +171,16 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
   const helpTitle = document.createElement("p");
   helpTitle.className = "trace-help-title";
-  helpTitle.textContent = "Kurz erklärt";
+  helpTitle.textContent = "⚡ Reaktion";
 
   const helpList = document.createElement("ul");
   helpList.className = "trace-help-list";
   helpList.innerHTML = [
-    "<li><strong>ENTER</strong>: Runde starten.</li>",
-    "<li><strong>Warten</strong>, bis der Klecks in der Mitte erscheint.</li>",
-    "<li><strong>SPACE</strong>: Beim Klecks so schnell wie möglich drücken.</li>",
-    "<li>Ab <strong>3 Treffern in Folge</strong> gibt es einen Stern.</li>"
+    "<li>⏎ <strong>ENTER</strong> – Runde starten</li>",
+    "<li>🕒 warten, bis der Klecks erscheint</li>",
+    "<li>␣ <strong>SPACE</strong> – so schnell wie möglich schlagen</li>",
+    "<li>⭐ 2+ Treffer in Folge = Sternchance</li>",
+    "<li>🙃 Zu früh gedrücktes SPACE startet nur den Versuch neu, deine Serie bleibt.</li>",
   ].join("");
 
   const helpHint = document.createElement("p");
@@ -254,7 +212,8 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   }
 
   function updateBestStreakDisplay() {
-    if (bestStreakValueEl) bestStreakValueEl.textContent = String(bestStreakEver || 0);
+    if (bestStreakValueEl)
+      bestStreakValueEl.textContent = String(bestStreakEver || 0);
   }
 
   function updateBestReaction(reactionSeconds) {
@@ -278,7 +237,11 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
   }
 
   function hideBlob() {
-    blob.classList.remove("visible", "reaction-blob-success", "reaction-blob-fail");
+    blob.classList.remove(
+      "visible",
+      "reaction-blob-success",
+      "reaction-blob-fail"
+    );
   }
 
   function showBlob() {
@@ -308,29 +271,45 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     }
   }
 
-  function scheduleNextSignal() {
+  /**
+   * Startet eine neue Wartephase:
+   * - fromRestart = true → Versuch wurde neu gestartet (SPACE zu früh), Serie bleibt.
+   * - fromRestart = false → normale neue Runde nach ENTER.
+   */
+  function scheduleNextSignal(fromRestart) {
     if (destroyed) return;
     clearTimers();
     state = "waiting";
     hasPressedThisRound = false;
     hideBlob();
+
     if (noteEl) noteEl.textContent = "";
     if (lastTimeValueEl) {
       lastTimeValueEl.textContent = "–";
-      lastTimeValueEl.className = "reaction-time-value reaction-time-neutral";
+      lastTimeValueEl.className =
+        "reaction-time-value reaction-time-neutral";
     }
 
-    const delay = MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS);
-    setStatus("Warte auf den Klecks …");
-    setHint("Nach ENTER: nichts drücken, bis der Klecks sichtbar ist.");
+    const delay =
+      MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS);
+
+    if (fromRestart) {
+      setStatus("Zu früh – Versuch neu gestartet. Warte auf den Klecks …");
+      setHint(
+        "Deine Serie bleibt bestehen. Jetzt wirklich warten, bis der Klecks sichtbar ist."
+      );
+    } else {
+      setStatus("Runde läuft – warte auf den Klecks …");
+      setHint("ENTER gedrückt. Nichts machen, bis der Klecks erscheint.");
+    }
 
     nextSignalTimeoutId = window.setTimeout(() => {
       if (destroyed || state !== "waiting") return;
       state = "signal";
       signalStartTime = performance.now();
       showBlob();
-      setStatus("Klecks! SPACE!");
-      setHint("Jetzt so schnell wie möglich die Leertaste drücken.");
+      setStatus("Klecks! Jetzt SPACE!");
+      setHint("So schnell wie möglich SPACE drücken – nicht zögern.");
       tooLateTimeoutId = window.setTimeout(() => {
         if (destroyed || state !== "signal" || hasPressedThisRound) return;
         handleTooLate();
@@ -338,10 +317,11 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     }, delay);
   }
 
-  // Streak-Auswertung bei Ende
+  // *** HIER: Sternenlogik analog zu anderen Spielen – kein eigenes Star-Gating mehr ***
   function evaluateStreakForReward(endedStreak) {
     if (!endedStreak || endedStreak <= 0) return null;
 
+    // Streak-Bestwerte pflegen
     if (endedStreak > bestStreakSession) bestStreakSession = endedStreak;
     if (endedStreak > (bestStreakEver || 0)) {
       bestStreakEver = endedStreak;
@@ -351,32 +331,18 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
     if (endedStreak < REQUIRED_STREAK_TO_UNLOCK) return null;
 
-    const baseReward = determineRewardFromStreak(endedStreak);
-    if (!baseReward) return null;
+    const reward = determineRewardFromStreak(endedStreak);
+    if (!reward) return null;
 
-    let finalLevel = baseReward.level;
-    const prevStarRank = starRank(bestStarLevel);
-    const newRank = starRank(finalLevel);
-
-    if (prevStarRank > newRank) {
-      finalLevel = bestStarLevel;
+    // Wie in den anderen Spielen: onWin direkt mit aktuellem Reward aufrufen,
+    // der Advent-Kalender kümmert sich darum, wie der Stern angezeigt / gespeichert wird.
+    try {
+      onWin(reward);
+    } catch (e) {
+      console.error("Fehler im onWin-Callback:", e);
     }
 
-    const prevNotifiedRank = starRank(lastNotifiedStarLevel);
-    const finalRank = starRank(finalLevel);
-
-    if (finalRank > prevNotifiedRank) {
-      lastNotifiedStarLevel = finalLevel;
-      bestStarLevel = finalLevel;
-      saveBestStar(bestStarLevel);
-      try {
-        onWin({ level: finalLevel, label: starLabelForLevel(finalLevel) });
-      } catch (e) {
-        console.error("Fehler im onWin-Callback:", e);
-      }
-    }
-
-    return baseReward;
+    return reward;
   }
 
   function handleTooLate() {
@@ -394,23 +360,30 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
     if (lastTimeValueEl) {
       lastTimeValueEl.textContent = "–";
-      lastTimeValueEl.className = "reaction-time-value reaction-time-bad";
+      lastTimeValueEl.className =
+        "reaction-time-value reaction-time-bad";
     }
     if (noteEl) noteEl.textContent = "Zu spät.";
 
     if (endedStreak >= REQUIRED_STREAK_TO_UNLOCK && reward) {
-      setStatus(`Serie ${endedStreak} vorbei – ${reward.label}.`);
+      setStatus(
+        `Zu spät – Serie ${endedStreak} vorbei, ${reward.label}.`
+      );
     } else if (endedStreak > 0) {
-      setStatus(`Serie ${endedStreak} vorbei.`);
+      setStatus(`Zu spät – Serie ${endedStreak} vorbei.`);
     } else {
-      setStatus("Zu spät.");
+      setStatus("Zu spät – keine Wertung.");
     }
-    setHint("ENTER für die nächste Runde.");
+    setHint(
+      "ENTER für die nächste Runde, dann wieder warten bis der Klecks erscheint."
+    );
   }
 
   function showReactionResult(reactionSeconds, wasEarly) {
     const good =
-      !wasEarly && reactionSeconds != null && reactionSeconds <= MAX_REACTION_SECONDS;
+      !wasEarly &&
+      reactionSeconds != null &&
+      reactionSeconds <= MAX_REACTION_SECONDS;
 
     if (!wasEarly && reactionSeconds != null) {
       updateBestReaction(reactionSeconds);
@@ -420,17 +393,19 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     if (reactionSeconds == null) {
       if (lastTimeValueEl) {
         lastTimeValueEl.textContent = "–";
-        lastTimeValueEl.className = "reaction-time-value reaction-time-neutral";
+        lastTimeValueEl.className =
+          "reaction-time-value reaction-time-neutral";
       }
     } else if (lastTimeValueEl) {
       const ms = Math.round(reactionSeconds * 1000);
       const secStr = reactionSeconds.toFixed(3).replace(".", ",");
       lastTimeValueEl.textContent = `${secStr} s (${ms} ms)`;
       lastTimeValueEl.className =
-        "reaction-time-value " + (good ? "reaction-time-good" : "reaction-time-bad");
+        "reaction-time-value " +
+        (good ? "reaction-time-good" : "reaction-time-bad");
     }
 
-    // Zu früh -> Streak endet
+    // --- Zu früh-Block (aktuell nicht genutzt, SPACE in „waiting“ startet Versuch neu) ---
     if (wasEarly) {
       const endedStreak = streak;
       const reward = evaluateStreakForReward(endedStreak);
@@ -441,13 +416,17 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       if (noteEl) noteEl.textContent = "Zu früh.";
 
       if (endedStreak >= REQUIRED_STREAK_TO_UNLOCK && reward) {
-        setStatus(`Zu früh – Serie ${endedStreak}, ${reward.label}.`);
+        setStatus(
+          `Zu früh – Serie ${endedStreak}, ${reward.label}.`
+        );
       } else if (endedStreak > 0) {
         setStatus(`Zu früh – Serie ${endedStreak} vorbei.`);
       } else {
         setStatus("Zu früh.");
       }
-      setHint("ENTER, dann warten, Klecks, SPACE.");
+      setHint(
+        "ENTER, dann warten, bis der Klecks wirklich sichtbar ist – dann SPACE."
+      );
       return;
     }
 
@@ -462,13 +441,17 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       if (noteEl) noteEl.textContent = "Zu langsam.";
 
       if (endedStreak >= REQUIRED_STREAK_TO_UNLOCK && reward) {
-        setStatus(`Zu langsam – Serie ${endedStreak}, ${reward.label}.`);
+        setStatus(
+          `Zu langsam – Serie ${endedStreak}, ${reward.label}.`
+        );
       } else if (endedStreak > 0) {
         setStatus(`Zu langsam – Serie ${endedStreak} vorbei.`);
       } else {
         setStatus("Zu langsam.");
       }
-      setHint("ENTER für neue Runde.");
+      setHint(
+        "ENTER für neue Runde. Versuch: beim Klecks sofort SPACE."
+      );
       return;
     }
 
@@ -485,26 +468,22 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     }
     updateBestStreakDisplay();
 
-    setStatus(`Serie ${streak}.`);
+    setStatus(`Guter Treffer! Serie: ${streak}.`);
     if (streak < REQUIRED_STREAK_TO_UNLOCK) {
-      setHint("3+ Treffer in Folge bringen einen Stern.");
+      setHint(
+        "2+ gute Treffer in Folge bringen einen Stern. ENTER für den nächsten Versuch."
+      );
     } else {
-      setHint("Serie halten – ENTER für nächste Runde.");
+      setHint(
+        "Serie halten! ENTER für die nächste Runde, gleich wieder schnell reagieren."
+      );
     }
   }
 
   function handleSpacePress() {
     if (destroyed) return;
 
-    if (state === "waiting") {
-      // zu früh
-      clearTimers();
-      state = "result";
-      hideBlob();
-      showReactionResult(null, true);
-      return;
-    }
-
+    // 1) Klecks ist da → normale Reaktionsmessung
     if (state === "signal") {
       if (hasPressedThisRound || signalStartTime == null) return;
       hasPressedThisRound = true;
@@ -514,13 +493,26 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       state = "result";
       hideBlob();
       showReactionResult(reactionSeconds, false);
+      return;
+    }
+
+    // 2) Zu früh in der Wartephase → Versuch NEU starten, Serie bleibt!
+    if (state === "waiting") {
+      scheduleNextSignal(true);
+      return;
+    }
+
+    // 3) In idle/result SPACE gedrückt → Hinweis geben
+    if (state === "idle" || state === "result") {
+      setStatus("SPACE funktioniert nur, wenn der Klecks sichtbar ist.");
+      setHint("Ablauf: ENTER → warten → Klecks → dann SPACE.");
     }
   }
 
   function handleEnterPress() {
     if (destroyed) return;
     if (state === "idle" || state === "result") {
-      scheduleNextSignal();
+      scheduleNextSignal(false);
     }
   }
 
@@ -537,12 +529,15 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
     signalStartTime = null;
     if (lastTimeValueEl) {
       lastTimeValueEl.textContent = "–";
-      lastTimeValueEl.className = "reaction-time-value reaction-time-neutral";
+      lastTimeValueEl.className =
+        "reaction-time-value reaction-time-neutral";
     }
     if (noteEl) noteEl.textContent = "";
     if (bestValueEl) bestValueEl.textContent = "–";
-    setStatus("Serie gelöscht.");
-    setHint("ENTER startet eine neue Runde.");
+    setStatus("Serie gelöscht. Du startest wieder bei 0.");
+    setHint(
+      "ENTER startet eine neue Runde. Dann wie immer: warten → Klecks → SPACE."
+    );
   }
 
   function handleKeyDown(event) {
@@ -561,8 +556,10 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
 
   // Initialtext + Bestwerte
   updateBestStreakDisplay();
-  setStatus("Bereit. ENTER startet.");
-  setHint("ENTER → warten → Klecks → SPACE.");
+  setStatus("Bereit. ENTER startet die erste Runde.");
+  setHint(
+    "Ablauf: ENTER → warten → Klecks → SPACE. Zu früh = Versuch neu, Serie bleibt."
+  );
 
   return {
     reset: handleReset,
@@ -570,6 +567,6 @@ window.AdventGames["fast_hands_reaction"] = function initFastHandsReaction(conta
       destroyed = true;
       clearTimers();
       window.removeEventListener("keydown", handleKeyDown);
-    }
+    },
   };
 };
