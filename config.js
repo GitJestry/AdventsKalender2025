@@ -6,7 +6,7 @@ const ADVENT_CONFIG = {
   recipientName: "meine Celine",
   missionIntro:
     "Bevor du deine echte Adventstür öffnen darfst, musst du die tägliche Challenge bestehen ♥",
-  debugMode: false,
+  debugMode: true,
   year: null,
 
   // Zentrale Spiele-Definitionen: hier neue Spiele eintragen.
